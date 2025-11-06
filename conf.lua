@@ -1,9 +1,9 @@
--- Rogue (2025) – A Modern Dungeon Crawler Adaptation
+-- JeriCraft: Dungeon Crawler
 -- License: MIT
 -- Copyright (c) 2025 Jericho Crosby (Chalwk)
 
 function love.conf(t)
-    t.window.title = "Rogue (2025) - A modern Adaptation"
+    t.window.title = "JeriCraft: Dungeon Crawler"
     t.window.fullscreen = true
     t.console = true
 end

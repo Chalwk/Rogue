@@ -1,4 +1,4 @@
--- Rogue (2025) – A Modern Dungeon Crawler Adaptation
+-- JeriCraft: Dungeon Crawler
 -- License: MIT
 -- Copyright (c) 2025 Jericho Crosby (Chalwk)
 
@@ -7,7 +7,7 @@ local math_sin = math.sin
 local math_floor = math.floor
 
 local helpText = {
-    "Welcome to Rogue (1980 Adaptation)!",
+    "Welcome to JeriCraft: Dungeon Crawler!",
     "",
     "Gameplay:",
     "• Explore randomly generated dungeons",
@@ -123,8 +123,8 @@ local function createMenuButtons(self)
         action = "help",
         width = 50,
         height = 50,
-        x = 30,
-        y = self.screenHeight - 60,
+        x = 10,
+        y = self.screenHeight - 30,
         color = { 0.3, 0.6, 0.9 }
     }
 
@@ -177,8 +177,8 @@ local function createOptionsButtons(self)
             color = { 0.8, 0.3, 0.3 }
         },
         {
-            text = "Rogue",
-            action = "char rogue",
+            text = "jc",
+            action = "char jc",
             width = 130,
             height = 40,
             x = 0,
@@ -331,7 +331,7 @@ local function drawHelpOverlay(self, screenWidth, screenHeight)
 
     -- Help box with modern design
     local boxWidth = 650
-    local boxHeight = 500
+    local boxHeight = 575
     local boxX = (screenWidth - boxWidth) / 2
     local boxY = (screenHeight - boxHeight) / 2
 
@@ -353,7 +353,7 @@ local function drawHelpOverlay(self, screenWidth, screenHeight)
     -- Title with icon
     lg.setColor(1, 1, 1)
     lg.setFont(self.largeFont)
-    lg.printf("Rogue - How to Play", boxX, boxY + 25, boxWidth, "center")
+    lg.printf("JeriCraft: Dungeon Crawler - How to Play", boxX, boxY + 25, boxWidth, "center")
 
     -- Help text with better formatting
     lg.setColor(0.9, 0.9, 0.9)
@@ -405,7 +405,7 @@ function Menu.new()
     instance.difficulty = "medium"
     instance.character = "warrior"
     instance.title = {
-        text = "ROGUE",
+        text = "JeriCraft: Dungeon Crawler",
         scale = 1,
         scaleDirection = 1,
         scaleSpeed = 0.4,
@@ -495,7 +495,7 @@ function Menu:draw(screenWidth, screenHeight, state)
             lg.setColor(0.9, 0.9, 0.9, 0.8)
             lg.setFont(self.smallFont)
             lg.printf(
-                "Explore dungeons, fight monsters, and find treasure!\nSurvive as long as you can in this classic roguelike adventure.",
+                "Explore dungeons, fight monsters, and find treasure!\nSurvive as long as you can in this dungeon crawler!",
                 0, screenHeight / 3 + 30, screenWidth, "center")
 
             -- Draw help button
@@ -508,8 +508,7 @@ function Menu:draw(screenWidth, screenHeight, state)
     -- Copyright
     lg.setColor(1, 1, 1, 0.6)
     lg.setFont(self.smallFont)
-    lg.printf("Based on Rogue (1980) - Adaptation © 2024",
-        10, screenHeight - 30, screenWidth - 20, "right")
+    lg.printf("© 2025 Jericho Crosby – JeriCraft: Dungeon Crawler", 10, screenHeight - 30, screenWidth - 20, "right")
 end
 
 function Menu:handleClick(x, y, state)

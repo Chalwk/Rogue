@@ -1,4 +1,4 @@
--- Rogue (2025) – A Modern Dungeon Crawler Adaptation
+-- JeriCraft: Dungeon Crawler
 -- License: MIT
 -- Copyright (c) 2025 Jericho Crosby (Chalwk)
 
@@ -788,7 +788,7 @@ function Game:startNewGame(difficulty, character)
             level = 1,
             inventory = {}
         }
-    elseif self.character == "rogue" then
+    elseif self.character == "jc" then
         self.player = {
             x = 1,
             y = 1,

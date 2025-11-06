@@ -1,4 +1,4 @@
--- Rogue (2025) – A Modern Dungeon Crawler Adaptation
+-- JeriCraft: Dungeon Crawler
 -- License: MIT
 -- Copyright (c) 2025 Jericho Crosby (Chalwk)
 
