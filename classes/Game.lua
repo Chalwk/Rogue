@@ -44,11 +44,11 @@ local TILES = {
 }
 
 local MONSTERS = {
-    { char = "k", name = "Kobold", color = { 0.6, 0.6, 0.2 }, hp = 5, attack = 2, xp = 5 },
+    { char = "k", name = "Kobold", color = { 0.6, 0.6, 0.2 }, hp = 5,  attack = 2, xp = 5 },
     { char = "o", name = "Orc",    color = { 0.3, 0.7, 0.3 }, hp = 10, attack = 4, xp = 15 },
-    { char = "s", name = "Snake",  color = { 0.3, 0.8, 0.3 }, hp = 3, attack = 1, xp = 3 },
+    { char = "s", name = "Snake",  color = { 0.3, 0.8, 0.3 }, hp = 3,  attack = 1, xp = 3 },
     { char = "z", name = "Zombie", color = { 0.4, 0.6, 0.4 }, hp = 15, attack = 3, xp = 20 },
-    { char = "B", name = "Bat",    color = { 0.7, 0.5, 0.7 }, hp = 2, attack = 1, xp = 2 }
+    { char = "B", name = "Bat",    color = { 0.7, 0.5, 0.7 }, hp = 2,  attack = 1, xp = 2 }
 }
 
 local ITEMS = {
@@ -245,7 +245,7 @@ local function attackMonster(self, monsterIndex)
         self.player.hp = self.player.hp - playerDamage
         addMessage(self, "The " .. monster.name .. " hits you for " .. playerDamage .. " damage!")
 
-        if self.player.hp <= 0 then self:gameOver(false) end
+        if self.player.hp <= 0 then self:setGameOver(false) end
     end
 end
 
@@ -279,7 +279,7 @@ local function attackPlayer(self, monsterIndex)
     self.player.hp = self.player.hp - damage
     addMessage(self, "The " .. monster.name .. " hits you for " .. damage .. " damage!")
 
-    if self.player.hp <= 0 then self:gameOver(false) end
+    if self.player.hp <= 0 then self:setGameOver(false) end
 end
 
 local function updateFOV(self)
@@ -466,8 +466,8 @@ local function monsterTurns(self)
     for i, monster in ipairs(self.monsters) do
         if self.visibleTiles[monster.y][monster.x] then
             -- Simple AI: move toward player if visible
-            local dx = 0
-            local dy = 0
+            -- Todo: Implement pathfinding
+            local dx, dy = 0, 0
 
             if monster.x < self.player.x then
                 dx = 1
@@ -610,11 +610,9 @@ function Game:rest()
     monsterTurns(self)
 end
 
-function Game:toggleInventory()
-    self.showInventory = not self.showInventory
-end
+function Game:toggleInventory() self.showInventory = not self.showInventory end
 
-function Game:gameOver(won)
+function Game:setGameOver(won)
     self.gameOver = true
     self.won = won
     if won then
