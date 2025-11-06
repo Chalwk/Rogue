@@ -82,6 +82,7 @@ local function drawDungeon(self)
     local offsetX = UI_WIDTH + 10
     local offsetY = 50
 
+    -- Draw dungeon
     for y = 1, DUNGEON_HEIGHT do
         for x = 1, DUNGEON_WIDTH do
             local tile = self.dungeon[y][x]
@@ -174,23 +175,63 @@ local function drawUI(self)
 end
 
 local function drawInventory(self)
-    lg.setColor(0, 0, 0, 0.8)
-    lg.rectangle("fill", 200, 150, 400, 300)
+    local panelX, panelY = 180, 100
+    local panelW, panelH = 440, 380
 
-    lg.setColor(1, 1, 1)
-    lg.setFont(lg.newFont(24))
-    lg.print("INVENTORY", 350, 170)
+    -- Background panel with border and drop shadow
+    lg.setColor(0, 0, 0, 0.75)
+    lg.rectangle("fill", panelX + 4, panelY + 4, panelW, panelH, 8, 8)
+    lg.setColor(0.1, 0.1, 0.15, 0.9)
+    lg.rectangle("fill", panelX, panelY, panelW, panelH, 8, 8)
 
-    lg.setFont(lg.newFont(16))
+    -- Gold border accent
+    lg.setColor(1, 0.85, 0.3, 0.8)
+    lg.setLineWidth(2)
+    lg.rectangle("line", panelX, panelY, panelW, panelH, 8, 8)
+
+    -- Title
+    local titleFont = lg.newFont(26)
+    lg.setFont(titleFont)
+    lg.setColor(1, 0.9, 0.5)
+    lg.printf("INVENTORY", panelX, panelY + 15, panelW, "center")
+
+    -- Divider line
+    lg.setColor(1, 0.85, 0.3, 0.3)
+    lg.rectangle("fill", panelX + 20, panelY + 55, panelW - 40, 1)
+
+    -- Inventory list area
+    local listFont = lg.newFont(18)
+    lg.setFont(listFont)
+
     if #self.player.inventory == 0 then
-        lg.print("Your inventory is empty.", 250, 250)
+        lg.setColor(0.8, 0.8, 0.8)
+        lg.printf("Your inventory is empty.", panelX, panelY + panelH / 2 - 10, panelW, "center")
     else
+        local startY = panelY + 75
+        local itemSpacing = 26
+
         for i, item in ipairs(self.player.inventory) do
-            lg.print(item, 250, 200 + i * 25)
+            local y = startY + (i - 1) * itemSpacing
+            local isSelected = (i == self.selectedItem)
+
+            if isSelected then
+                -- Highlight background for selected item
+                lg.setColor(0.25, 0.25, 0.35, 0.8)
+                lg.rectangle("fill", panelX + 24, y - 4, panelW - 48, itemSpacing - 2, 6, 6)
+                lg.setColor(1, 1, 0.6)
+            else
+                lg.setColor(0.9, 0.9, 0.9)
+            end
+
+            lg.print("- " .. item, panelX + 36, y)
         end
     end
 
-    lg.print("Press I to close", 320, 400)
+    -- Footer info
+    local footerFont = lg.newFont(14)
+    lg.setFont(footerFont)
+    lg.setColor(0.75, 0.75, 0.75, 0.8)
+    lg.printf("Press I to close", panelX, panelY + panelH - 35, panelW, "center")
 end
 
 local function drawGameOver(self)
