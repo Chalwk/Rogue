@@ -75,6 +75,7 @@ local function levelUp(self)
     self.player.defense = self.player.defense + 1
 
     addMessage(self, "You reached level " .. self.player.level .. "! You feel stronger!")
+    self.sounds:play("level_up")
 end
 
 local function calculateTileSize(self)
@@ -312,6 +313,7 @@ local function attackMonster(self, monsterIndex)
     monster.hp = monster.hp - damage
 
     addMessage(self, "You hit the " .. monster.name .. " for " .. damage .. " damage!")
+    self.sounds:play("monster_hit")
 
     if monster.hp <= 0 then
         addMessage(self, "You killed the " .. monster.name .. "!")
@@ -326,6 +328,7 @@ local function attackMonster(self, monsterIndex)
         local playerDamage = math_max(1, monster.attack - math_random(0, self.player.defense))
         self.player.hp = self.player.hp - playerDamage
         addMessage(self, "The " .. monster.name .. " hits you for " .. playerDamage .. " damage!")
+        self.sounds:play("player_hit")
 
         if self.player.hp <= 0 then self:setGameOver(false) end
     end
@@ -360,6 +363,7 @@ local function attackPlayer(self, monsterIndex)
 
     self.player.hp = self.player.hp - damage
     addMessage(self, "The " .. monster.name .. " hits you for " .. damage .. " damage!")
+    self.sounds:play("player_hit")
 
     if self.player.hp <= 0 then self:setGameOver(false) end
 end
@@ -541,6 +545,7 @@ end
 local function nextLevel(self)
     self.dungeonLevel = self.dungeonLevel + 1
     addMessage(self, "You descend deeper into the dungeon...")
+    self.sounds:play("next_level")
     generateDungeon(self)
 end
 
@@ -639,12 +644,14 @@ function Game:movePlayer(dx, dy)
     -- Check bounds
     if newX < 1 or newX > DUNGEON_WIDTH or newY < 1 or newY > DUNGEON_HEIGHT then
         addMessage(self, "You can't go that way!")
+        self.sounds:play("bump")
         return
     end
 
     -- Check for walls
     if self.dungeon[newY][newX].type == "wall" then
         addMessage(self, "You bump into a wall.")
+        self.sounds:play("bump")
         return
     end
 
@@ -652,6 +659,7 @@ function Game:movePlayer(dx, dy)
     local attackedMonster = nil
     for i, monster in ipairs(self.monsters) do
         if monster.x == newX and monster.y == newY then
+            self.sounds:play("attack")
             attackMonster(self, i)
             attackedMonster = monster
             break
@@ -668,14 +676,18 @@ function Game:movePlayer(dx, dy)
     end
 
     -- Check for items
+    local pickedUpItem = false
     for i, item in ipairs(self.items) do
         if item.x == newX and item.y == newY then
+            self.sounds:play("pickup")
             pickupItem(self, i)
+            pickedUpItem = true
             break
         end
     end
 
-    -- Move player
+    if not pickedUpItem then self.sounds:play("walk") end
+
     self.player.x = newX
     self.player.y = newY
 
@@ -694,6 +706,7 @@ function Game:rest()
     local heal = math_random(1, 3)
     self.player.hp = math_min(self.player.maxHp, self.player.hp + heal)
     addMessage(self, "You rest and heal " .. heal .. " HP")
+    self.sounds:play("heal") -- todo: create healing sound
     self.turn = self.turn + 1
     monsterTurns(self)
 end

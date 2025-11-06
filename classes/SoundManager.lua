@@ -8,12 +8,15 @@ SoundManager.__index = SoundManager
 function SoundManager.new()
     local instance = setmetatable({
         sounds = {
-            --walk = love.audio.newSource("assets/sounds/walk.wav", "static"),
-            --attack = love.audio.newSource("assets/sounds/attack.wav", "static"),
-            --monster_hit = love.audio.newSource("assets/sounds/monster_hit.wav", "static"),
-            --player_hit = love.audio.newSource("assets/sounds/player_hit.wav", "static"),
-            --pickup = love.audio.newSource("assets/sounds/pickup.wav", "static"),
-            --level_up = love.audio.newSource("assets/sounds/level_up.wav", "static")
+            walk = love.audio.newSource("assets/sounds/walk.mp3", "static"),
+            attack = love.audio.newSource("assets/sounds/attack.mp3", "static"),
+            monster_hit = love.audio.newSource("assets/sounds/monster_hit.mp3", "static"),
+            player_hit = love.audio.newSource("assets/sounds/player_hit.mp3", "static"),
+            pickup = love.audio.newSource("assets/sounds/pickup.mp3", "static"),
+            level_up = love.audio.newSource("assets/sounds/level_up.mp3", "static"),
+            bump = love.audio.newSource("assets/sounds/bump.mp3", "static"),
+            next_level = love.audio.newSource("assets/sounds/next_level.mp3", "static"),
+            heal = love.audio.newSource("assets/sounds/heal.mp3", "static")
         }
     }, SoundManager)
 
