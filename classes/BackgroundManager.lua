@@ -206,7 +206,7 @@ function BackgroundManager:drawGameBackground(screenWidth, screenHeight, time)
     end
 
     -- Subtle stone wall pattern
-    lg.setColor(0.1, 0.1, 0.15, 0.1)
+    lg.setColor(0.1, 0.1, 0.15, 0.5)
     local gridSize = 40
     local offset = math_sin(time * 0.3) * 2
 
