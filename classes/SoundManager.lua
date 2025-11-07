@@ -18,12 +18,20 @@ function SoundManager.new()
             next_level = love.audio.newSource("assets/sounds/next_level.mp3", "static"),
             heal = love.audio.newSource("assets/sounds/heal.mp3", "static"),
             unlock = love.audio.newSource("assets/sounds/unlock.mp3", "static"),
-            locked = love.audio.newSource("assets/sounds/locked.mp3", "static")
+            locked = love.audio.newSource("assets/sounds/locked.mp3", "static"),
+            ambience = love.audio.newSource("assets/sounds/ambience.mp3", "stream")
         }
     }, SoundManager)
 
-    for _, sound in pairs(instance.sounds) do sound:setVolume(0.7) end
+    instance.sounds.ambience:setLooping(true)
+    instance.sounds.ambience:setVolume(0.8)
+    instance.sounds.ambience:play()
 
+    for name, sound in pairs(instance.sounds) do
+        if not name == "ambience" then
+            sound:setVolume(0.5)
+        end
+    end
     return instance
 end
 
