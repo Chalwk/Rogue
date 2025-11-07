@@ -19,23 +19,22 @@ local DUNGEON_HEIGHT = 40
 local ROOM_MIN_SIZE = 4
 local ROOM_MAX_SIZE = 10
 local MAX_ROOMS = 20
-local SPECIAL_ROOM_CHANCE = 1                -- 30% chance a room is special
+local SPECIAL_ROOM_CHANCE = 1                -- 30% chance a room is special (1 for debugging)
 local FLOOR_COLOR = { 0.35, 0.35, 0.35, 0.3 }
 local SPECIAL_WALL_COLOR = { 0.6, 0.3, 0.6 } -- Purple walls for special rooms
 
 -- ASCII characters for display
 local TILES = {
-    WALL = "░",
-    FLOOR = "▧",
+    WALL = "▥",
+    FLOOR = "▩",
     EXIT = "🚪",
-    PLAYER = "☃",
+    PLAYER = "🕴",
     GOLD = "♦",
     FOOD = "♠",
     WEAPON = "⚔",
     ARMOR = "🛡",
     POTION = "♣",
     SCROLL = "⁂",
-    TRAP = "⌂",
     KEY = "⚷",
     LOCKED_DOOR = "🔒",
     UNLOCKED_DOOR = "🚪",

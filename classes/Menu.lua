@@ -29,7 +29,6 @@ local helpText = {
     "π - Doors",
     "» - Stairs down",
     "« - Stairs up",
-    "⌂ - Traps",
     "† - Kobold, ‡ - Orc, ¶ - Snake",
     "§ - Zombie, ¤ - Bat, • - Spider",
     "♦ - Gold, ♠ - Food, ♣ - Potion",
