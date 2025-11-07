@@ -364,7 +364,7 @@ local function drawHelpOverlay(self, screenWidth, screenHeight)
 
     -- Title with icon
     lg.setColor(1, 1, 1)
-    self.fonts:setFont("largeFont")
+    self.fonts:setFont("mediumFont")
     lg.printf("JeriCraft: Dungeon Crawler - How to Play", boxX, boxY + 25, boxWidth, "center")
 
     -- Help text with better formatting
@@ -513,7 +513,7 @@ function Menu:draw(screenWidth, screenHeight, state)
     -- Copyright
     lg.setColor(1, 1, 1, 0.6)
     self.fonts:setFont("smallFont")
-    lg.printf("© 2025 Jericho Crosby – JeriCraft: Dungeon Crawler", 10, screenHeight - 30, screenWidth - 20, "right")
+    lg.printf("© 2025 Jericho Crosby - JeriCraft: Dungeon Crawler", 10, screenHeight - 30, screenWidth - 20, "right")
 end
 
 function Menu:handleClick(x, y, state)

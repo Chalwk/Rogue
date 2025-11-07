@@ -22,11 +22,11 @@ local MAX_ROOMS = 20
 -- ASCII characters for display
 local TILES = {
     WALL = "█",
-    FLOOR = "·",
+    FLOOR = "•",
     DOOR = "π",
     STAIRS_UP = "⮝",
     STAIRS_DOWN = "⮟",
-    PLAYER = "⛑",
+    PLAYER = "☺",
     GOLD = "♦",
     FOOD = "♠",
     WEAPON = "⚔",

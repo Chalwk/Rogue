@@ -152,24 +152,43 @@ local function drawUI(self)
 
     self.fonts:setFont("mediumFont")
     lg.print("CONTROLS", x, y); y = y + 18
+
+    local controlsYOffset = 10
     self.fonts:setFont("smallFont")
 
-    lg.print("Move: Arrow / WASD", x, y); y = y + 18
-    lg.print("Wait: Space", x, y); y = y + 18
-    lg.print("Rest: R", x, y); y = y + 18
-    lg.print("Inventory: I", x, y); y = y + 18
-    lg.print("Menu: ESC", x, y); y = y + 26
+    lg.print("Move: Arrow / WASD", x, y + controlsYOffset); y = y + 18
+    lg.print("Wait: Space", x, y + controlsYOffset); y = y + 18
+    lg.print("Rest: R", x, y + controlsYOffset); y = y + 18
+    lg.print("Inventory: I", x, y + controlsYOffset); y = y + 18
+    lg.print("Menu: ESC", x, y + controlsYOffset); y = y + 26
 
-    -- Message log at bottom of UI (most recent at top)
+    -- Message log box
+    local boxWidth = UI_WIDTH - UI_PADDING * 2 + 130
+    local boxHeight = 6 * 20 + 4
+    local boxX = x
+    local boxY = self.screenHeight - UI_PADDING - boxHeight - 2 * 26
+
+    -- Draw background box
+    lg.setColor(0, 0, 0, 0.6)
+    lg.rectangle("fill", boxX, boxY, boxWidth, boxHeight)
+    lg.setColor(1, 1, 1, 0.8)
+    lg.setLineWidth(2)
+    lg.rectangle("line", boxX, boxY, boxWidth, boxHeight)
+    lg.setLineWidth(1)
+
+    -- Draw messages inside box (most recent at top)
     lg.setColor(0.85, 0.85, 0.85)
-    local logStartY = self.screenHeight - UI_PADDING - (#self.messageLog * 18)
-    for i, message in ipairs(self.messageLog) do
-        lg.print(message, x, logStartY + (i - 1) * 18)
+    self.fonts:setFont("smallFont")
+    local lineHeight = 18
+    local maxMessages = math_floor(boxHeight / lineHeight)
+    for i = 1, math_min(#self.messageLog, maxMessages) do
+        local message = self.messageLog[i]
+        lg.print(message, boxX + 4, boxY + 4 + (i - 1) * lineHeight)
     end
 end
 
 local function drawInventory(self)
-    local panelX, panelY = 215, 100
+    local panelX, panelY = 345, 75
     local panelW, panelH = 440, 380
 
     -- Background panel with border and drop shadow
@@ -184,7 +203,7 @@ local function drawInventory(self)
     lg.rectangle("line", panelX, panelY, panelW, panelH, 8, 8)
 
     -- Title
-    self.fonts:setFont("titleFont")
+    self.fonts:setFont("largeFont")
 
     lg.setColor(1, 0.9, 0.5)
     lg.printf("INVENTORY", panelX, panelY + 15, panelW, "center")
@@ -221,8 +240,8 @@ local function drawInventory(self)
     end
 
     -- Footer info
-    self.fonts:setFont("smallFont")
-    lg.setColor(0.75, 0.75, 0.75, 0.8)
+    self.fonts:setFont("mediumFont")
+    lg.setColor(0.75, 0.75, 0.75, 1)
     lg.printf("Press I to close", panelX, panelY + panelH - 35, panelW, "center")
 end
 
