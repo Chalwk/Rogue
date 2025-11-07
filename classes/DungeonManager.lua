@@ -173,7 +173,6 @@ local function createRoom(dungeon, room, isSpecialRoom)
         for x = room.x - 1, room.x + room.w + 1 do
             if y == room.y - 1 or y == room.y + room.h + 1 or
                 x == room.x - 1 or x == room.x + room.w + 1 then
-                -- Only place wall if it's not already a floor from another room
                 if not (dungeon[y] and dungeon[y][x] and dungeon[y][x].type == "floor") then
                     dungeon[y][x] = { type = "wall", char = TILES.WALL, color = wallColor }
                 end
