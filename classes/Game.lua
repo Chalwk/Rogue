@@ -75,44 +75,99 @@ local function drawDungeon(self)
     end
     self.fonts:setFont(self.dungeonFont)
 
-    -- Draw dungeon
-    for y = 1, self.dungeonManager.DUNGEON_HEIGHT do
-        for x = 1, self.dungeonManager.DUNGEON_WIDTH do
-            local tile = self.dungeon[y][x]
-            local screenX = offsetX + (x - 1) * tileSize
-            local screenY = offsetY + (y - 1) * tileSize
+    -- Draw dungeon - handle special room vs main dungeon
+    if self.inSpecialRoom then
+        -- Only draw the special room and its contents
+        local specialRoomData = self.specialRooms[1] -- Assuming one special room for now
+        if specialRoomData then
+            local room = specialRoomData.room
 
-            if self.visibleTiles[y][x] then
-                lg.setColor(tile.color)
-                lg.print(tile.char, screenX, screenY)
-            elseif self.exploredTiles[y][x] then
-                lg.setColor(tile.color[1] * 0.3, tile.color[2] * 0.3, tile.color[3] * 0.3)
-                lg.print(tile.char, screenX, screenY)
+            -- Draw only the special room area
+            for y = room.y, room.y + room.h do
+                for x = room.x, room.x + room.w do
+                    if y >= 1 and y <= self.dungeonManager.DUNGEON_HEIGHT and
+                        x >= 1 and x <= self.dungeonManager.DUNGEON_WIDTH then
+                        local tile = self.dungeon[y][x]
+                        local screenX = offsetX + (x - 1) * tileSize
+                        local screenY = offsetY + (y - 1) * tileSize
+
+                        if self.visibleTiles[y][x] then
+                            lg.setColor(tile.color)
+                            lg.print(tile.char, screenX, screenY)
+                        elseif self.exploredTiles[y][x] then
+                            lg.setColor(tile.color[1] * 0.3, tile.color[2] * 0.3, tile.color[3] * 0.3)
+                            lg.print(tile.char, screenX, screenY)
+                        end
+                    end
+                end
+            end
+
+            -- Draw items in special room
+            for _, item in ipairs(self.items) do
+                if item.x >= room.x and item.x <= room.x + room.w and
+                    item.y >= room.y and item.y <= room.y + room.h then
+                    if self.visibleTiles[item.y][item.x] then
+                        local screenX = offsetX + (item.x - 1) * tileSize
+                        local screenY = offsetY + (item.y - 1) * tileSize
+                        lg.setColor(item.color)
+                        lg.print(item.char, screenX, screenY)
+                    end
+                end
+            end
+
+            -- Draw monsters in special room
+            for _, monster in ipairs(self.monsters) do
+                if monster.x >= room.x and monster.x <= room.x + room.w and
+                    monster.y >= room.y and monster.y <= room.y + room.h then
+                    if self.visibleTiles[monster.y][monster.x] then
+                        local screenX = offsetX + (monster.x - 1) * tileSize
+                        local screenY = offsetY + (monster.y - 1) * tileSize
+                        lg.setColor(monster.color)
+                        lg.print(monster.char, screenX, screenY)
+                    end
+                end
+            end
+        end
+    else
+        -- Draw entire main dungeon (original logic)
+        for y = 1, self.dungeonManager.DUNGEON_HEIGHT do
+            for x = 1, self.dungeonManager.DUNGEON_WIDTH do
+                local tile = self.dungeon[y][x]
+                local screenX = offsetX + (x - 1) * tileSize
+                local screenY = offsetY + (y - 1) * tileSize
+
+                if self.visibleTiles[y][x] then
+                    lg.setColor(tile.color)
+                    lg.print(tile.char, screenX, screenY)
+                elseif self.exploredTiles[y][x] then
+                    lg.setColor(tile.color[1] * 0.3, tile.color[2] * 0.3, tile.color[3] * 0.3)
+                    lg.print(tile.char, screenX, screenY)
+                end
+            end
+        end
+
+        -- Draw items in main dungeon
+        for _, item in ipairs(self.items) do
+            if self.visibleTiles[item.y][item.x] then
+                local screenX = offsetX + (item.x - 1) * tileSize
+                local screenY = offsetY + (item.y - 1) * tileSize
+                lg.setColor(item.color)
+                lg.print(item.char, screenX, screenY)
+            end
+        end
+
+        -- Draw monsters in main dungeon
+        for _, monster in ipairs(self.monsters) do
+            if self.visibleTiles[monster.y][monster.x] then
+                local screenX = offsetX + (monster.x - 1) * tileSize
+                local screenY = offsetY + (monster.y - 1) * tileSize
+                lg.setColor(monster.color)
+                lg.print(monster.char, screenX, screenY)
             end
         end
     end
 
-    -- Draw items
-    for _, item in ipairs(self.items) do
-        if self.visibleTiles[item.y][item.x] then
-            local screenX = offsetX + (item.x - 1) * tileSize
-            local screenY = offsetY + (item.y - 1) * tileSize
-            lg.setColor(item.color)
-            lg.print(item.char, screenX, screenY)
-        end
-    end
-
-    -- Draw monsters
-    for _, monster in ipairs(self.monsters) do
-        if self.visibleTiles[monster.y][monster.x] then
-            local screenX = offsetX + (monster.x - 1) * tileSize
-            local screenY = offsetY + (monster.y - 1) * tileSize
-            lg.setColor(monster.color)
-            lg.print(monster.char, screenX, screenY)
-        end
-    end
-
-    -- Draw player
+    -- Draw player (always draw regardless of room)
     local playerScreenX = offsetX + (self.player.x - 1) * tileSize
     local playerScreenY = offsetY + (self.player.y - 1) * tileSize
     lg.setColor(self.player.color)
@@ -413,8 +468,16 @@ local function enterSpecialRoom(self, specialRoomData)
     addMessage(self, "You enter the secret chamber!")
     self.sounds:play("unlock")
 
-    -- Update FOV to show the special room
-    updateFOV(self)
+    -- Make entire special room visible and explored
+    for y = room.y, room.y + room.h do
+        for x = room.x, room.x + room.w do
+            if y >= 1 and y <= self.dungeonManager.DUNGEON_HEIGHT and
+                x >= 1 and x <= self.dungeonManager.DUNGEON_WIDTH then
+                self.visibleTiles[y][x] = true
+                self.exploredTiles[y][x] = true
+            end
+        end
+    end
 end
 
 local function leaveSpecialRoom(self)
