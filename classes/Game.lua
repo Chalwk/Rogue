@@ -146,7 +146,7 @@ local function drawMessageLog(self, x, y)
 
     -- Messages with typing effect
     lg.setColor(0.8, 1.0, 0.8)
-    self.fonts:setFont("smallFont")
+    self.fonts:setFont("tinyFont")
     local maxMessages = 6
     for i = 1, math_min(#self.messageLog, maxMessages) do
         lg.print(self.messageLog[i], x + 4, boxY + 4 + (i - 1) * 18)
@@ -569,45 +569,36 @@ local function tryOpenDoor(self)
     for _, dir in ipairs(directions) do
         local checkX = self.player.x + dir[1]
         local checkY = self.player.y + dir[2]
-
-        -- Check bounds
         if checkX >= 1 and checkX <= self.dungeonManager.DUNGEON_WIDTH and
             checkY >= 1 and checkY <= self.dungeonManager.DUNGEON_HEIGHT then
             local tile = self.dungeon[checkY][checkX]
 
             if tile.type == "locked_door" then
-                -- Check if player has regular key for exit
                 local keyIndex = hasKey(self, "Key")
                 if hasKey then
-                    -- Unlock the exit door
                     tile.type = "EXIT"
                     tile.char = self.dungeonManager.TILES.EXIT
                     tile.color = { 0.8, 0.8, 0.2 }
-
-                    -- Remove key from inventory
                     table_remove(self.player.inventory, keyIndex)
-
                     addMessage(self, "You unlock the exit door with the key!")
                     self.sounds:play("unlock")
                 else
-                    addMessage(self, "The exit is locked. You need a key to open it.")
+                    addMessage(self, "Door locked. You need the exit key to open it!")
                     self.sounds:play("locked")
                 end
                 return
             elseif tile.type == "special_door" then
-                -- Check if player has special key for special room
                 local keyIndex = hasKey(self, "Special Key")
                 if keyIndex then
-                    -- Remove special key and enter special room
                     table_remove(self.player.inventory, keyIndex)
                     enterSpecialRoom(self, checkX, checkY)
                 else
-                    addMessage(self, "The mysterious door is locked. You need a special key to open it.")
+                    addMessage(self, "Door locked. You need a special key to open it.")
                     self.sounds:play("locked")
                 end
                 return
             elseif tile.type == "EXIT" then
-                addMessage(self, "The exit is already unlocked. Step on it to descend.")
+                addMessage(self, "Exit already unlocked. Step on it to descend.")
                 return
             end
         end

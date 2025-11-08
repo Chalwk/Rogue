@@ -9,6 +9,7 @@ local FontManager = {}
 FontManager.__index = FontManager
 
 local fonts = {
+    tinyFont = 12,
     smallFont = 14,
     mediumFont = 24,
     largeFont = 48,
