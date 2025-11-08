@@ -127,71 +127,93 @@ local function drawDungeon(self)
     lg.print(self.player.char, offsetX + (self.player.x - 1) * tileSize, offsetY + (self.player.y - 1) * tileSize)
 end
 
+local UI_BG_COLOR = { 0.1, 0.1, 0.2, 0.9 }
+local UI_BORDER_COLOR = { 0.3, 0.3, 0.8 }
+local UI_TEXT_COLOR = { 0.8, 0.9, 1.0 }
+
+local function drawMessageLog(self, x, y)
+    local boxWidth = UI_WIDTH + 120 - UI_PADDING * 2
+    local boxHeight = 120
+    local boxY = self.screenHeight - boxHeight - UI_PADDING
+
+    -- Message log with scanlines effect
+    lg.setColor(0.05, 0.05, 0.15, 0.8)
+    lg.rectangle("fill", x, boxY, boxWidth, boxHeight)
+
+    lg.setColor(0.2, 0.4, 0.8)
+    lg.setLineWidth(1)
+    lg.rectangle("line", x, boxY, boxWidth, boxHeight)
+
+    -- Messages with typing effect
+    lg.setColor(0.8, 1.0, 0.8)
+    self.fonts:setFont("smallFont")
+    local maxMessages = 6
+    for i = 1, math_min(#self.messageLog, maxMessages) do
+        lg.print(self.messageLog[i], x + 4, boxY + 4 + (i - 1) * 18)
+    end
+end
+
+local controls = {
+    "↑↓←→ / WASD - Move",
+    "SPACE - Wait",
+    "R - Rest/Heal",
+    "E - Use/Open",
+    "I - Inventory",
+    "ESC - Menu"
+}
+
 local function drawUI(self)
     local x, y = UI_PADDING, UI_PADDING
 
+    -- UI Background
+    love.graphics.setColor(UI_BG_COLOR)
+    love.graphics.rectangle("fill", 0, 0, UI_WIDTH + 120, self.screenHeight - 4)
+    love.graphics.setColor(UI_BORDER_COLOR)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", 0, 0, UI_WIDTH + 120, self.screenHeight - 4)
+    love.graphics.setLineWidth(1)
+
     -- Header
     self.fonts:setFont("mediumFont")
-    lg.print("STATUS", x, y)
-    y = y + 28
+    lg.setColor(0.9, 0.9, 0.2)
+    lg.print("╔═STATUS═╗", x, y)
+    y = y + 40
+
+    local text_offset = 10
 
     -- Player stats
     self.fonts:setFont("smallFont")
-    lg.print("Level: " .. self.dungeonLevel, x, y); y = y + 24
-    lg.print("HP: " .. self.player.hp .. "/" .. self.player.maxHp, x, y); y = y + 24
-    lg.print("Atk: " .. self.player.attack, x, y); y = y + 20
-    lg.print("Def: " .. self.player.defense, x, y); y = y + 20
-    lg.print("Gold: " .. self.player.gold, x, y); y = y + 20
-    lg.print("XP: " .. self.player.xp .. "/" .. (self.player.level * 10), x, y); y = y + 20
-    lg.print("Turn: " .. self.turn, x, y); y = y + 20
+    lg.setColor(UI_TEXT_COLOR)
+    lg.print("♚ Level: " .. self.dungeonLevel, x + text_offset, y); y = y + 24
+    lg.print("♥ HP: " .. self.player.hp .. "/" .. self.player.maxHp, x + text_offset, y); y = y + 24
+    lg.print("⚔ Atk: " .. self.player.attack, x + text_offset, y); y = y + 20
+    lg.print("🛡 Def: " .. self.player.defense, x + text_offset, y); y = y + 20
+    lg.print("💰 Gold: " .. self.player.gold, x + text_offset, y); y = y + 20
+    lg.print("⭐ XP: " .. self.player.xp .. "/" .. (self.player.level * 10), x + text_offset, y); y = y + 20
+    lg.print("⏱ Turn: " .. self.turn, x + text_offset, y); y = y + 20
 
     -- Location indicator
     if self.inSpecialRoom then
-        lg.setColor(0.8, 0.6, 0.2) -- Gold color for special room
-        lg.print("Location: Special Room", x, y); y = y + 32
-        lg.setColor(1, 1, 1)       -- Reset to white
+        lg.setColor(0.9, 0.7, 0.2)
+        lg.print("📍 Special Chamber", x + text_offset, y); y = y + 32
     else
-        lg.print("Location: Dungeon Level " .. self.dungeonLevel, x, y); y = y + 32
+        lg.setColor(0.6, 0.8, 1.0)
+        lg.print("🏰 Dungeon Level " .. self.dungeonLevel, x + text_offset, y); y = y + 32
     end
 
-    -- Controls block
-    lg.setColor(0.75, 0.75, 0.75)
-
+    -- Controls
+    lg.setColor(0.9, 0.9, 0.2)
     self.fonts:setFont("mediumFont")
-    lg.print("CONTROLS", x, y); y = y + 18
-
-    local controlsYOffset = 10
+    lg.print("╔═CONTROLS═╗", x, y); y = y + 37
+    lg.setColor(UI_TEXT_COLOR)
     self.fonts:setFont("smallFont")
-
-    lg.print("Move: Arrow / WASD", x, y + controlsYOffset); y = y + 18
-    lg.print("Wait: Space", x, y + controlsYOffset); y = y + 18
-    lg.print("Rest: R", x, y + controlsYOffset); y = y + 18
-    lg.print("Inventory: I", x, y + controlsYOffset); y = y + 18
-    lg.print("Menu: ESC", x, y + controlsYOffset); y = y + 26
-
-    -- Message log box
-    local boxWidth = UI_WIDTH - UI_PADDING * 2 + 130
-    local boxHeight = 6 * 20 + 4
-    local boxX = x
-    local boxY = self.screenHeight - UI_PADDING - boxHeight - 2 * 26
-
-    -- Draw background box
-    lg.setColor(0, 0, 0, 0.6)
-    lg.rectangle("fill", boxX, boxY, boxWidth, boxHeight)
-    lg.setColor(1, 1, 1, 0.8)
-    lg.setLineWidth(2)
-    lg.rectangle("line", boxX, boxY, boxWidth, boxHeight)
-    lg.setLineWidth(1)
-
-    -- Draw messages inside box (most recent at top)
-    lg.setColor(0.85, 0.85, 0.85)
-    self.fonts:setFont("smallFont")
-    local lineHeight = 18
-    local maxMessages = math_floor(boxHeight / lineHeight)
-    for i = 1, math_min(#self.messageLog, maxMessages) do
-        local message = self.messageLog[i]
-        lg.print(message, boxX + 4, boxY + 4 + (i - 1) * lineHeight)
+    for _, control in ipairs(controls) do
+        lg.print(control, x + text_offset, y)
+        y = y + 20
     end
+    y = y + 10
+
+    drawMessageLog(self, x, y)
 end
 
 local function drawInventory(self)
@@ -287,7 +309,7 @@ local function attackMonster(self, monsterIndex, inSpecialRoom)
 
     monster.hp = monster.hp - damage
 
-    addMessage(self, "You hit the " .. monster.name .. " for " .. damage .. " damage!")
+    addMessage(self, "+" .. damage .. " to " .. monster.name)
     self.sounds:play("monster_hit")
 
     if monster.hp <= 0 then
@@ -302,7 +324,7 @@ local function attackMonster(self, monsterIndex, inSpecialRoom)
         -- Monster counterattack
         local playerDamage = math_max(1, monster.attack - math_random(0, self.player.defense))
         self.player.hp = self.player.hp - playerDamage
-        addMessage(self, "The " .. monster.name .. " hits you for " .. playerDamage .. " damage!")
+        addMessage(self, monster.name .. " attacks you (+" .. playerDamage .. " dmg!)")
         self.sounds:play("player_hit")
 
         if self.player.hp <= 0 then self:setGameOver(false) end
@@ -966,7 +988,7 @@ function Game:startNewGame(difficulty, character)
     end
 
     generateDungeon(self)
-    addMessage(self, "Welcome to the dungeon! Good luck, adventurer!")
+    addMessage(self, "Welcome to the dungeon!")
 end
 
 function Game:handleClick(x, y) if self.gameOver then return end end
