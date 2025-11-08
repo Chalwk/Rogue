@@ -35,9 +35,9 @@ local TILES = {
     ARMOR = "🛡",
     POTION = "♣",
     SCROLL = "⁂",
-    KEY = "🗝",           -- Regular key for exit door
-    SPECIAL_KEY = "⚷",    -- Special key for special rooms
-    LOCKED_DOOR = "🔒",
+    KEY = "⚷",
+    SPECIAL_KEY = "⚷",
+    LOCKED_DOOR = "🚪",
     UNLOCKED_DOOR = "🚪",
     SPECIAL_DOOR = "🚪",
     SPECIAL_WALL = "▓"
@@ -402,7 +402,7 @@ function DungeonManager:generateDungeon(player)
         dungeon[sy][sx] = {
             type = "locked_door",
             char = TILES.LOCKED_DOOR,
-            color = { 0.8, 0.8, 0.2 }
+            color = { 0.8, 0, 0 }
         }
     end
 

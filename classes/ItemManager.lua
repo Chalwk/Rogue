@@ -277,7 +277,7 @@ local ITEM_APPEARANCE = {
     ["Gold"] = { char = "♦", color = { 1, 0.8, 0.2 } },
     ["Food"] = { char = "♠", color = { 0.9, 0.7, 0.3 } },
     ["Dagger"] = { char = "⚔", color = { 0.8, 0.8, 0.8 } },
-    ["Leather Armor"] = { char = "🛡", color = { 0.6, 0.4, 0.2 } },
+    ["Leather Armor"] = { char = "۞", color = { 0.6, 0.4, 0.2 } },
     ["Healing Potion"] = { char = "♣", color = { 1, 0.2, 0.2 } },
     ["Scroll"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
 
@@ -306,7 +306,7 @@ local ITEM_APPEARANCE = {
     ["Scroll of Monster Confusion"] = { char = "⁂", color = { 0.8, 0.5, 1 } },
 
     -- Keys
-    ["Key"] = { char = "🗝", color = { 0.8, 0.8, 0.8 } },
+    ["Key"] = { char = "⚷", color = { 0.8, 0.8, 0.8 } },
     ["Special Key"] = { char = "⚷", color = { 1, 0.8, 0 } },
 }
 

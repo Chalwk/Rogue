@@ -83,7 +83,7 @@ local function drawDungeon(self)
     -- Choose data sources based on room type
     local dungeon = isSpecialRoom and self.specialRoomDungeon or self.dungeon
     local visibleTiles = isSpecialRoom and self.specialRoomVisibleTiles or self.visibleTiles
-    local exploredTiles = isSpecialRoom and self.exploredTiles or nil
+    local exploredTiles = isSpecialRoom and nil or self.exploredTiles
     local items = isSpecialRoom and self.specialRoomItems or self.items
     local monsters = isSpecialRoom and self.specialRoomMonsters or self.monsters
     local borderColor = isSpecialRoom and { 0.8, 0.6, 0.2 } or { 1, 1, 1 }
@@ -356,7 +356,7 @@ end
 
 local function updateFOV(self)
     if self.inSpecialRoom then
-        self.dungeonManager:updateFOV(self.player, self.specialRoomVisibleTiles, self.specialRoomVisibleTiles)
+        self.dungeonManager:updateFOV(self.player, self.specialRoomVisibleTiles, {})
     else
         self.dungeonManager:updateFOV(self.player, self.visibleTiles, self.exploredTiles)
     end
@@ -370,6 +370,14 @@ local function generateDungeon(self)
     self.items = items
     self.visibleTiles = visibleTiles
     self.specialDoors = specialDoors or {}
+
+    -- Reset explored tiles for the new level
+    for y = 1, self.dungeonManager.DUNGEON_HEIGHT do
+        self.exploredTiles[y] = {}
+        for x = 1, self.dungeonManager.DUNGEON_WIDTH do
+            self.exploredTiles[y][x] = false
+        end
+    end
 
     updateFOV(self)
 end
@@ -489,6 +497,8 @@ local function nextLevel(self)
     self.dungeonLevel = self.dungeonLevel + 1
     addMessage(self, "You descend deeper into the dungeon...")
     self.sounds:play("next_level")
+
+    self.specialRoomCache = {}
     generateDungeon(self)
 end
 
