@@ -78,7 +78,6 @@ local ITEM_EFFECTS = {
     ["Scroll of Teleportation"] = {
         type = "scroll",
         use = function(player, game)
-            -- Find a random floor tile to teleport to
             local possiblePositions = {}
             for y = 1, #game.dungeon do
                 for x = 1, #game.dungeon[y] do
@@ -101,7 +100,7 @@ local ITEM_EFFECTS = {
         end
     },
 
-    -- Potions (enhanced versions)
+    -- Potions
     ["Greater Healing Potion"] = {
         type = "potion",
         use = function(player, game)
@@ -125,7 +124,6 @@ local ITEM_EFFECTS = {
 }
 
 local ITEM_APPEARANCE = {
-    -- Basic items
     ["Gold"] = { char = "♦", color = { 1, 0.8, 0.2 } },
     ["Food"] = { char = "♠", color = { 0.9, 0.7, 0.3 } },
     ["Dagger"] = { char = "⚔", color = { 0.8, 0.8, 0.8 } },
@@ -133,8 +131,6 @@ local ITEM_APPEARANCE = {
     ["Healing Potion"] = { char = "♣", color = { 1, 0.2, 0.2 } },
     ["Scroll"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
     ["Key"] = { char = "⚷", color = { 1, 1, 0 } },
-
-    -- Enhanced items
     ["Iron Sword"] = { char = "⚔", color = { 0.9, 0.9, 0.9 } },
     ["Chain Mail"] = { char = "🛡", color = { 0.7, 0.7, 0.7 } },
     ["Greater Healing Potion"] = { char = "♣", color = { 1, 0.5, 0.5 } },
@@ -174,17 +170,15 @@ function ItemManager:useItem(itemName, player, game)
 
     local result = effect.use(player, game)
 
-    -- Handle temporary effects
     if effect.duration then
         addTemporaryEffect(self, itemName, effect, player, game.turn)
     end
 
-    -- Play appropriate sound
     if game.sounds then
         if effect.type == "potion" then
             game.sounds:play("heal")
         elseif effect.type == "scroll" then
-            game.sounds:play("unlock") -- Using unlock sound for scrolls
+            game.sounds:play("unlock")
         else
             game.sounds:play("pickup")
         end

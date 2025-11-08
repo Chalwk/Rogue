@@ -19,7 +19,6 @@ local ItemManager = require("classes.ItemManager")
 local Game = {}
 Game.__index = Game
 
--- UI constants
 local UI_WIDTH = 200
 local UI_PADDING = 8
 
@@ -45,17 +44,13 @@ local function calculateTileSize(self)
     local availableWidth = self.screenWidth - UI_WIDTH - 20
     local availableHeight = self.screenHeight - 100
 
-    -- Calculate tile size based on available space
     local tileWidth = availableWidth / self.dungeonManager.DUNGEON_WIDTH
     local tileHeight = availableHeight / self.dungeonManager.DUNGEON_HEIGHT
 
-    -- Use the smaller dimension to maintain aspect ratio, and ensure integer size
     self.tileSize = math_max(8, math_floor(math_min(tileWidth, tileHeight)))
 
-    -- Force integer tile size for crisp rendering
     self.tileSize = math_max(8, self.tileSize) -- Minimum 8 pixels
 
-    -- Calculate offsets to center the dungeon
     local dungeonPixelWidth = self.dungeonManager.DUNGEON_WIDTH * self.tileSize
     local dungeonPixelHeight = self.dungeonManager.DUNGEON_HEIGHT * self.tileSize
 
@@ -63,30 +58,47 @@ local function calculateTileSize(self)
     self.dungeonOffsetY = 50 + (availableHeight - dungeonPixelHeight) / 2
 end
 
+local function drawBorder(r, g, b, xOff, yOff, gridWidth, gridHeight)
+    lg.setColor(r, g, b, 0.8)
+    lg.setLineWidth(3)
+    lg.rectangle("line", xOff, yOff, gridWidth, gridHeight)
+    lg.setLineWidth(1)
+end
+
 local function drawDungeon(self)
-    -- Recalculate tile size in case screen was resized
     calculateTileSize(self)
 
+    local isSpecialRoom = self.inSpecialRoom
     local tileSize = self.tileSize
     local offsetX = self.dungeonOffsetX
     local offsetY = self.dungeonOffsetY
+    local dungeonWidth = self.dungeonManager.DUNGEON_WIDTH
+    local dungeonHeight = self.dungeonManager.DUNGEON_HEIGHT
 
     if not self.dungeonFont or self.dungeonFont:getHeight() ~= tileSize then
         self.dungeonFont = self.fonts:getFontOfSize(tileSize)
     end
     self.fonts:setFont(self.dungeonFont)
 
-    -- Draw entire dungeon
-    for y = 1, self.dungeonManager.DUNGEON_HEIGHT do
-        for x = 1, self.dungeonManager.DUNGEON_WIDTH do
-            local tile = self.dungeon[y][x]
+    -- Choose data sources based on room type
+    local dungeon = isSpecialRoom and self.specialRoomDungeon or self.dungeon
+    local visibleTiles = isSpecialRoom and self.specialRoomVisibleTiles or self.visibleTiles
+    local exploredTiles = isSpecialRoom and self.exploredTiles or nil
+    local items = isSpecialRoom and self.specialRoomItems or self.items
+    local monsters = isSpecialRoom and self.specialRoomMonsters or self.monsters
+    local borderColor = isSpecialRoom and { 0.8, 0.6, 0.2 } or { 1, 1, 1 }
+
+    -- Draw dungeon/room tiles
+    for y = 1, dungeonHeight do
+        for x = 1, dungeonWidth do
+            local tile = dungeon[y][x]
             local screenX = offsetX + (x - 1) * tileSize
             local screenY = offsetY + (y - 1) * tileSize
 
-            if self.visibleTiles[y][x] then
+            if visibleTiles[y][x] then
                 lg.setColor(tile.color)
                 lg.print(tile.char, screenX, screenY)
-            elseif self.exploredTiles[y][x] then
+            elseif exploredTiles and exploredTiles[y][x] then
                 lg.setColor(tile.color[1] * 0.3, tile.color[2] * 0.3, tile.color[3] * 0.3)
                 lg.print(tile.char, screenX, screenY)
             end
@@ -94,8 +106,8 @@ local function drawDungeon(self)
     end
 
     -- Draw items
-    for _, item in ipairs(self.items) do
-        if self.visibleTiles[item.y][item.x] then
+    for _, item in ipairs(items) do
+        if visibleTiles[item.y][item.x] then
             local screenX = offsetX + (item.x - 1) * tileSize
             local screenY = offsetY + (item.y - 1) * tileSize
             lg.setColor(item.color)
@@ -104,8 +116,8 @@ local function drawDungeon(self)
     end
 
     -- Draw monsters
-    for _, monster in ipairs(self.monsters) do
-        if self.visibleTiles[monster.y][monster.x] then
+    for _, monster in ipairs(monsters) do
+        if visibleTiles[monster.y][monster.x] then
             local screenX = offsetX + (monster.x - 1) * tileSize
             local screenY = offsetY + (monster.y - 1) * tileSize
             lg.setColor(monster.color)
@@ -119,77 +131,9 @@ local function drawDungeon(self)
     lg.setColor(self.player.color)
     lg.print(self.player.char, playerScreenX, playerScreenY)
 
-    -- Draw white border around the grid
-    local gridWidth = self.dungeonManager.DUNGEON_WIDTH * tileSize
-    local gridHeight = self.dungeonManager.DUNGEON_HEIGHT * tileSize
-
-    lg.setColor(1, 1, 1, 0.8)
-    lg.setLineWidth(2)
-    lg.rectangle("line", offsetX, offsetY, gridWidth, gridHeight)
-    lg.setLineWidth(1)
-end
-
-local function drawSpecialRoom(self)
-    -- Recalculate tile size in case screen was resized
-    calculateTileSize(self)
-
-    local tileSize = self.tileSize
-    local offsetX = self.dungeonOffsetX
-    local offsetY = self.dungeonOffsetY
-
-    if not self.dungeonFont or self.dungeonFont:getHeight() ~= tileSize then
-        self.dungeonFont = self.fonts:getFontOfSize(tileSize)
-    end
-    self.fonts:setFont(self.dungeonFont)
-
-    -- Draw special room
-    for y = 1, self.dungeonManager.DUNGEON_HEIGHT do
-        for x = 1, self.dungeonManager.DUNGEON_WIDTH do
-            local tile = self.specialRoomDungeon[y][x]
-            local screenX = offsetX + (x - 1) * tileSize
-            local screenY = offsetY + (y - 1) * tileSize
-
-            if self.specialRoomVisibleTiles[y][x] then
-                lg.setColor(tile.color)
-                lg.print(tile.char, screenX, screenY)
-            end
-        end
-    end
-
-    -- Draw special room items
-    for _, item in ipairs(self.specialRoomItems) do
-        if self.specialRoomVisibleTiles[item.y][item.x] then
-            local screenX = offsetX + (item.x - 1) * tileSize
-            local screenY = offsetY + (item.y - 1) * tileSize
-            lg.setColor(item.color)
-            lg.print(item.char, screenX, screenY)
-        end
-    end
-
-    -- Draw special room monsters
-    for _, monster in ipairs(self.specialRoomMonsters) do
-        if self.specialRoomVisibleTiles[monster.y][monster.x] then
-            local screenX = offsetX + (monster.x - 1) * tileSize
-            local screenY = offsetY + (monster.y - 1) * tileSize
-            lg.setColor(monster.color)
-            lg.print(monster.char, screenX, screenY)
-        end
-    end
-
-    -- Draw player in special room
-    local playerScreenX = offsetX + (self.player.x - 1) * tileSize
-    local playerScreenY = offsetY + (self.player.y - 1) * tileSize
-    lg.setColor(self.player.color)
-    lg.print(self.player.char, playerScreenX, playerScreenY)
-
-    -- Draw white border around the grid with special color
-    local gridWidth = self.dungeonManager.DUNGEON_WIDTH * tileSize
-    local gridHeight = self.dungeonManager.DUNGEON_HEIGHT * tileSize
-
-    lg.setColor(0.8, 0.6, 0.2, 0.8) -- Gold border for special room
-    lg.setLineWidth(3)
-    lg.rectangle("line", offsetX, offsetY, gridWidth, gridHeight)
-    lg.setLineWidth(1)
+    -- Draw border around grid
+    local gridWidth, gridHeight = dungeonWidth * tileSize, dungeonHeight * tileSize
+    drawBorder(borderColor[1], borderColor[2], borderColor[3], offsetX, offsetY, gridWidth, gridHeight)
 end
 
 local function drawUI(self)
@@ -549,7 +493,6 @@ local function monsterTurns(self, inSpecialRoom)
 
     for i, monster in ipairs(monsters) do
         if visibleTiles[monster.y][monster.x] then
-            -- Simple AI: move toward player if visible
             local dx, dy = 0, 0
 
             if monster.x < self.player.x then
@@ -583,6 +526,7 @@ end
 
 -- up, right, down, left
 local directions = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } }
+
 local function tryOpenDoor(self)
     for _, dir in ipairs(directions) do
         local checkX = self.player.x + dir[1]
@@ -855,7 +799,6 @@ function Game:rest()
     end
 end
 
--- Replace your current toggleInventory function with:
 function Game:toggleInventory()
     self.showInventory = not self.showInventory
     if self.showInventory then
@@ -907,11 +850,7 @@ function Game:draw()
     lg.push()
     lg.translate(offsetX, offsetY)
 
-    if self.inSpecialRoom then
-        drawSpecialRoom(self)
-    else
-        drawDungeon(self)
-    end
+    drawDungeon(self)
 
     drawUI(self)
 

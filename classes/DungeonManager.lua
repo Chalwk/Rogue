@@ -12,17 +12,14 @@ local math_max = math.max
 local math_min = math.min
 local math_random = love.math.random
 
--- Dungeon generation constants
 local DUNGEON_WIDTH = 60
 local DUNGEON_HEIGHT = 40
 local ROOM_MIN_SIZE = 4
 local ROOM_MAX_SIZE = 10
 local MAX_ROOMS = 20
-local SPECIAL_ROOM_CHANCE = 0.3
 local FLOOR_COLOR = { 0.35, 0.35, 0.35, 0.3 }
+local SPECIAL_ROOM_CHANCE = 0.3
 local SPECIAL_WALL_COLOR = { 0.6, 0.3, 0.6 }
-
--- Special room constants
 local SPECIAL_ROOM_MIN_SIZE = 6
 local SPECIAL_ROOM_MAX_SIZE = 12
 
@@ -111,7 +108,7 @@ local function placeEntities(self, dungeon, monsters, items, player, room, isSpe
         end
     end
 
-    -- Place items - now using ItemManager for all item definitions
+    -- Place items
     local numItems = math_random(isSpecialRoom and 2 or 0, isSpecialRoom and 4 or 2)
     for _ = 1, numItems do
         local x = math_random(room.x + 1, room.x + room.w - 2)
@@ -121,7 +118,6 @@ local function placeEntities(self, dungeon, monsters, items, player, room, isSpe
             local item
 
             if isSpecialRoom then
-                -- Better loot in special rooms - use ItemManager for enhanced items
                 local enhancedItemName = self.itemManager:getRandomEnhancedItem()
                 local itemDefinition = self.itemManager:getItemDefinition(enhancedItemName)
 
@@ -140,7 +136,7 @@ local function placeEntities(self, dungeon, monsters, items, player, room, isSpe
                     }
                 end
             else
-                -- Regular rooms use basic items
+                -- Regular rooms use basic items. TODO: change this
                 local basicItems = getBasicItemDefinitions()
                 item = basicItems[math_random(#basicItems)]
             end
@@ -430,15 +426,12 @@ function DungeonManager:isBlocked(dungeon, monsters, player, x, y)
     if not dungeon[y] or not dungeon[y][x] then return true end
 
     local t = dungeon[y][x].type
-    -- Allow movement through special doors (they're handled by interaction)
     if t == "wall" then return true end
 
-    -- Check monsters
     for _, monster in ipairs(monsters) do
         if monster.x == x and monster.y == y then return true end
     end
 
-    -- Check player
     if player.x == x and player.y == y then return true end
 
     return false
