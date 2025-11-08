@@ -7,10 +7,21 @@ ItemManager.__index = ItemManager
 
 local ipairs = ipairs
 local pairs = pairs
+local table_insert = table.insert
 
 local math_random = love.math.random
 local math_min = math.min
 local math_max = math.max
+
+-- Basic item definitions for regular rooms
+local BASIC_ITEMS = {
+    { char = "♦", name = "Gold", color = { 1, 0.8, 0.2 } },
+    { char = "♠", name = "Food", color = { 0.9, 0.7, 0.3 } },
+    { char = "⚔", name = "Dagger", color = { 0.8, 0.8, 0.8 } },
+    { char = "🛡", name = "Leather Armor", color = { 0.6, 0.4, 0.2 } },
+    { char = "♣", name = "Healing Potion", color = { 1, 0.2, 0.2 } },
+    { char = "⁂", name = "Scroll", color = { 0.8, 0.8, 1 } }
+}
 
 local ITEM_EFFECTS = {
     -- Weapons
@@ -182,7 +193,7 @@ local ITEM_EFFECTS = {
                             end
                         end
                         if not blocked and not (player.x == x and player.y == y) then
-                            table.insert(possiblePositions, { x = x, y = y })
+                            table_insert(possiblePositions, { x = x, y = y })
                         end
                     end
                 end
@@ -277,7 +288,7 @@ local ITEM_APPEARANCE = {
     ["Gold"] = { char = "♦", color = { 1, 0.8, 0.2 } },
     ["Food"] = { char = "♠", color = { 0.9, 0.7, 0.3 } },
     ["Dagger"] = { char = "⚔", color = { 0.8, 0.8, 0.8 } },
-    ["Leather Armor"] = { char = "۞", color = { 0.6, 0.4, 0.2 } },
+    ["Leather Armor"] = { char = "🛡", color = { 0.6, 0.4, 0.2 } },
     ["Healing Potion"] = { char = "♣", color = { 1, 0.2, 0.2 } },
     ["Scroll"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
 
@@ -322,15 +333,15 @@ local function addTemporaryEffect(self, effectName, effect, player, currentTurn)
     }
 end
 
-function ItemManager:getItemDefinition(itemName)
-    return ITEM_APPEARANCE[itemName]
-end
-
 function ItemManager.new()
     local instance = setmetatable({}, ItemManager)
     instance.activeEffects = {}
     return instance
 end
+
+function ItemManager:getBasicItemDefinitions() return BASIC_ITEMS end
+
+function ItemManager:getItemDefinition(itemName) return ITEM_APPEARANCE[itemName] end
 
 function ItemManager:useItem(itemName, player, game)
     local effect = ITEM_EFFECTS[itemName]
@@ -365,7 +376,7 @@ function ItemManager:updateEffects(player, currentTurn)
             local original = effectData.originalStats
             player.attack = original.attack
             player.defense = original.defense
-            table.insert(expiredEffects, effectName)
+            table_insert(expiredEffects, effectName)
         end
     end
 

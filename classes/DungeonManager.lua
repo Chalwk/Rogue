@@ -35,8 +35,8 @@ local TILES = {
     ARMOR = "🛡",
     POTION = "♣",
     SCROLL = "⁂",
-    KEY = "⚷",
-    SPECIAL_KEY = "⚷",
+    KEY = "⚷",           -- Regular key for exit door
+    SPECIAL_KEY = "⚷",   -- Special key for special rooms
     LOCKED_DOOR = "🚪",
     UNLOCKED_DOOR = "🚪",
     SPECIAL_DOOR = "🚪",
@@ -72,18 +72,6 @@ local function createTunnel(dungeon, room1, room2)
     for y = math_min(y1, y2), math_max(y1, y2) do
         dungeon[y][x2] = { type = "floor", char = TILES.FLOOR, color = FLOOR_COLOR }
     end
-end
-
-local function getBasicItemDefinitions()
-    -- Define basic items that should appear in regular rooms
-    return {
-        { char = TILES.GOLD,   name = "Gold",           color = { 1, 0.8, 0.2 } },
-        { char = TILES.FOOD,   name = "Food",           color = { 0.9, 0.7, 0.3 } },
-        { char = TILES.WEAPON, name = "Dagger",         color = { 0.8, 0.8, 0.8 } },
-        { char = TILES.ARMOR,  name = "Leather Armor",  color = { 0.6, 0.4, 0.2 } },
-        { char = TILES.POTION, name = "Healing Potion", color = { 1, 0.2, 0.2 } },
-        { char = TILES.SCROLL, name = "Scroll",         color = { 0.8, 0.8, 1 } }
-    }
 end
 
 local function placeEntities(self, dungeon, monsters, items, player, room, isSpecialRoom)
@@ -136,7 +124,7 @@ local function placeEntities(self, dungeon, monsters, items, player, room, isSpe
                     }
                 end
             else
-                local basicItems = getBasicItemDefinitions()
+                local basicItems = self.itemManager:getBasicItemDefinitions()
                 item = basicItems[math_random(#basicItems)]
             end
 
