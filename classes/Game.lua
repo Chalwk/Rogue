@@ -221,7 +221,6 @@ local function drawInventory(self)
 
     -- Title
     self.fonts:setFont("largeFont")
-
     lg.setColor(1, 0.9, 0.5)
     lg.printf("INVENTORY", panelX, panelY + 15, panelW, "center")
 
@@ -248,6 +247,13 @@ local function drawInventory(self)
                 lg.setColor(0.25, 0.25, 0.35, 0.8)
                 lg.rectangle("fill", panelX + 24, y + 2, panelW - 48, itemSpacing - 2, 6, 6)
                 lg.setColor(1, 1, 0.6)
+
+                -- Show item description for selected item
+                local description = self.itemManager:getItemDescription(item)
+                lg.setColor(0.8, 0.8, 1)
+                self.fonts:setFont("smallFont")
+                lg.printf(description, panelX + 30, y + 24, panelW - 60, "left")
+                self.fonts:setFont("listFont")
             else
                 lg.setColor(0.9, 0.9, 0.9)
             end
@@ -259,7 +265,7 @@ local function drawInventory(self)
     -- Footer info
     self.fonts:setFont("mediumFont")
     lg.setColor(0.75, 0.75, 0.75, 1)
-    lg.printf("Press I to close", panelX, panelY + panelH - 35, panelW, "center")
+    lg.printf("↑↓: Select | E: Use | I: Close", panelX, panelY + panelH - 35, panelW, "center")
 end
 
 local function drawGameOver(self)
@@ -321,11 +327,10 @@ local function pickupItem(self, itemIndex, inSpecialRoom)
         local gold = math_random(1, 10)
         self.player.gold = self.player.gold + gold
         addMessage(self, "You found " .. gold .. " gold pieces!")
-    elseif item.char == self.dungeonManager.TILES.FOOD then
-        local heal = math_random(2, 5)
-        self.player.hp = math_min(self.player.maxHp, self.player.hp + heal)
-        addMessage(self, "You eat some food and heal " .. heal .. " HP!")
-    elseif item.char == self.dungeonManager.TILES.POTION then
+    elseif item.name == "Food" then
+        table_insert(self.player.inventory, item.name)
+        addMessage(self, "You pick up " .. item.name)
+    elseif item.char == self.dungeonManager.TILES.POTION and item.name == "Healing Potion" then
         local heal = math_random(5, 10)
         self.player.hp = math_min(self.player.maxHp, self.player.hp + heal)
         addMessage(self, "You drink a healing potion and restore " .. heal .. " HP!")
@@ -812,10 +817,21 @@ function Game:useSelectedItem()
     local itemName = self.player.inventory[self.selectedItem]
     if not itemName then return end
 
+    -- Don't allow using gold or keys from inventory (they have special handling)
+    if itemName == "Gold" then
+        addMessage(self, "Gold is used automatically when picked up.")
+        return
+    end
+
+    if itemName == "Special Key" then
+        addMessage(self, "Special keys are used automatically when next to locked doors.")
+        return
+    end
+
     local result = self.itemManager:useItem(itemName, self.player, self)
 
-    -- Remove the item from inventory after use (except for equipment)
-    if not self.itemManager:isEquipment(itemName) then
+    -- Remove the item from inventory if it's consumable (except equipment)
+    if self.itemManager:isConsumable(itemName) then
         table.remove(self.player.inventory, self.selectedItem)
         if #self.player.inventory == 0 then
             self.showInventory = false
@@ -825,6 +841,14 @@ function Game:useSelectedItem()
     end
 
     addMessage(self, result)
+    self.turn = self.turn + 1
+
+    -- Process monster turns after item use
+    if self.inSpecialRoom then
+        monsterTurns(self, true)
+    else
+        monsterTurns(self, false)
+    end
 end
 
 function Game:setGameOver(won)
