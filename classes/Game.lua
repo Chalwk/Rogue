@@ -49,8 +49,6 @@ local function calculateTileSize(self)
 
     self.tileSize = math_max(8, math_floor(math_min(tileWidth, tileHeight)))
 
-    self.tileSize = math_max(8, self.tileSize) -- Minimum 8 pixels
-
     local dungeonPixelWidth = self.dungeonManager.DUNGEON_WIDTH * self.tileSize
     local dungeonPixelHeight = self.dungeonManager.DUNGEON_HEIGHT * self.tileSize
 
@@ -70,17 +68,11 @@ local function drawDungeon(self)
 
     local isSpecialRoom = self.inSpecialRoom
     local tileSize = self.tileSize
-    local offsetX = self.dungeonOffsetX
-    local offsetY = self.dungeonOffsetY
-    local dungeonWidth = self.dungeonManager.DUNGEON_WIDTH
-    local dungeonHeight = self.dungeonManager.DUNGEON_HEIGHT
+    local offsetX, offsetY = self.dungeonOffsetX, self.dungeonOffsetY
+    local dungeonWidth, dungeonHeight = self.dungeonManager.DUNGEON_WIDTH, self.dungeonManager.DUNGEON_HEIGHT
+    local gridWidth, gridHeight = dungeonWidth * tileSize, dungeonHeight * tileSize
 
-    if not self.dungeonFont or self.dungeonFont:getHeight() ~= tileSize then
-        self.dungeonFont = self.fonts:getFontOfSize(tileSize)
-    end
-    self.fonts:setFont(self.dungeonFont)
-
-    -- Choose data sources based on room type
+    -- Choose data sources
     local dungeon = isSpecialRoom and self.specialRoomDungeon or self.dungeon
     local visibleTiles = isSpecialRoom and self.specialRoomVisibleTiles or self.visibleTiles
     local exploredTiles = isSpecialRoom and nil or self.exploredTiles
@@ -88,12 +80,20 @@ local function drawDungeon(self)
     local monsters = isSpecialRoom and self.specialRoomMonsters or self.monsters
     local borderColor = isSpecialRoom and { 0.8, 0.6, 0.2 } or { 1, 1, 1 }
 
-    -- Draw dungeon/room tiles
-    for y = 1, dungeonHeight do
-        for x = 1, dungeonWidth do
+    -- Set font once
+    if not self.dungeonFont or self.dungeonFont:getHeight() ~= tileSize then
+        self.dungeonFont = self.fonts:getFontOfSize(tileSize)
+    end
+    self.fonts:setFont(self.dungeonFont)
+
+    -- Draw border around grid
+    drawBorder(borderColor[1], borderColor[2], borderColor[3], offsetX, offsetY, gridWidth, gridHeight)
+
+    -- Draw tiles with optimized loops
+    for y = 1, self.dungeonManager.DUNGEON_HEIGHT do
+        for x = 1, self.dungeonManager.DUNGEON_WIDTH do
             local tile = dungeon[y][x]
-            local screenX = offsetX + (x - 1) * tileSize
-            local screenY = offsetY + (y - 1) * tileSize
+            local screenX, screenY = offsetX + (x - 1) * tileSize, offsetY + (y - 1) * tileSize
 
             if visibleTiles[y][x] then
                 lg.setColor(tile.color)
@@ -105,40 +105,30 @@ local function drawDungeon(self)
         end
     end
 
-    -- Draw items
-    for _, item in ipairs(items) do
+    -- Draw items and monsters in single passes
+    for i = 1, #items do
+        local item = items[i]
         if visibleTiles[item.y][item.x] then
-            local screenX = offsetX + (item.x - 1) * tileSize
-            local screenY = offsetY + (item.y - 1) * tileSize
             lg.setColor(item.color)
-            lg.print(item.char, screenX, screenY)
+            lg.print(item.char, offsetX + (item.x - 1) * tileSize, offsetY + (item.y - 1) * tileSize)
         end
     end
 
-    -- Draw monsters
-    for _, monster in ipairs(monsters) do
+    for i = 1, #monsters do
+        local monster = monsters[i]
         if visibleTiles[monster.y][monster.x] then
-            local screenX = offsetX + (monster.x - 1) * tileSize
-            local screenY = offsetY + (monster.y - 1) * tileSize
             lg.setColor(monster.color)
-            lg.print(monster.char, screenX, screenY)
+            lg.print(monster.char, offsetX + (monster.x - 1) * tileSize, offsetY + (monster.y - 1) * tileSize)
         end
     end
 
     -- Draw player
-    local playerScreenX = offsetX + (self.player.x - 1) * tileSize
-    local playerScreenY = offsetY + (self.player.y - 1) * tileSize
     lg.setColor(self.player.color)
-    lg.print(self.player.char, playerScreenX, playerScreenY)
-
-    -- Draw border around grid
-    local gridWidth, gridHeight = dungeonWidth * tileSize, dungeonHeight * tileSize
-    drawBorder(borderColor[1], borderColor[2], borderColor[3], offsetX, offsetY, gridWidth, gridHeight)
+    lg.print(self.player.char, offsetX + (self.player.x - 1) * tileSize, offsetY + (self.player.y - 1) * tileSize)
 end
 
 local function drawUI(self)
-    local x = UI_PADDING
-    local y = UI_PADDING
+    local x, y = UI_PADDING, UI_PADDING
 
     -- Header
     self.fonts:setFont("mediumFont")
@@ -504,35 +494,35 @@ end
 
 local function monsterTurns(self, inSpecialRoom)
     local monsters = inSpecialRoom and self.specialRoomMonsters or self.monsters
-    local visibleTiles = inSpecialRoom and self.specialRoomVisibleTiles or self.visibleTiles
+    local playerX, playerY = self.player.x, self.player.y
+    local dungeon = inSpecialRoom and self.specialRoomDungeon or self.dungeon
 
-    for i, monster in ipairs(monsters) do
-        if visibleTiles[monster.y][monster.x] then
+    for i = 1, #monsters do
+        local monster = monsters[i]
+        local visibleTiles = inSpecialRoom and self.specialRoomVisibleTiles or self.visibleTiles
+
+        if visibleTiles[monster.y] and visibleTiles[monster.y][monster.x] then
             local dx, dy = 0, 0
 
-            if monster.x < self.player.x then
+            -- Calculate direction toward player
+            if monster.x < playerX then
                 dx = 1
-            elseif monster.x > self.player.x then
+            elseif monster.x > playerX then
                 dx = -1
             end
 
-            if monster.y < self.player.y then
+            if monster.y < playerY then
                 dy = 1
-            elseif monster.y > self.player.y then
+            elseif monster.y > playerY then
                 dy = -1
             end
 
-            local newX = monster.x + dx
-            local newY = monster.y + dy
+            local newX, newY = monster.x + dx, monster.y + dy
 
-            if not self.dungeonManager:isBlocked(
-                    inSpecialRoom and self.specialRoomDungeon or self.dungeon,
-                    inSpecialRoom and self.specialRoomMonsters or self.monsters,
-                    self.player, newX, newY
-                ) then
-                monster.x = newX
-                monster.y = newY
-            elseif newX == self.player.x and newY == self.player.y then
+            -- Check if move is possible
+            if not self.dungeonManager:isBlocked(dungeon, monsters, self.player, newX, newY) then
+                monster.x, monster.y = newX, newY
+            elseif newX == playerX and newY == playerY then
                 attackPlayer(self, i, inSpecialRoom)
             end
         end
@@ -681,36 +671,37 @@ end
 function Game:tryOpenDoor() tryOpenDoor(self) end
 
 local function handleMovement(self, newX, newY, dungeon, monsters, items, isSpecial)
-    local tile = dungeon[newY][newX]
+    local tile = dungeon[newY] and dungeon[newY][newX]
+    if not tile then return false end
 
     -- Wall check
     if tile.type == "wall" then
         addMessage(self, "You bump into a wall.")
         self.sounds:play("bump")
-        return true
+        return false
     end
 
-    -- Special-only exit back to main dungeon
+    -- Handle special cases
     if isSpecial and tile.type == "special_exit" then
         leaveSpecialRoom(self)
         return true
     end
 
-    -- Main dungeon special door check
     if not isSpecial and tile.type == "special_door" then
         addMessage(self, "You see a mysterious door. Press 'E' to enter.")
         self.sounds:play("bump")
-        return true
+        return false
     end
 
-    -- Main dungeon exit to next level
     if not isSpecial and tile.type == "EXIT" then
         nextLevel(self)
         return true
     end
 
-    -- Monster check
-    for i, monster in ipairs(monsters) do
+    -- Check for monsters
+    local monsterList = isSpecial and self.specialRoomMonsters or self.monsters
+    for i = 1, #monsterList do
+        local monster = monsterList[i]
         if monster.x == newX and monster.y == newY then
             self.sounds:play("attack")
             attackMonster(self, i, isSpecial)
@@ -718,13 +709,14 @@ local function handleMovement(self, newX, newY, dungeon, monsters, items, isSpec
         end
     end
 
-    -- Item pickup
-    for i, item in ipairs(items) do
+    -- Check for items
+    local itemList = isSpecial and self.specialRoomItems or self.items
+    for i = 1, #itemList do
+        local item = itemList[i]
         if item.x == newX and item.y == newY then
             self.sounds:play("pickup")
             pickupItem(self, i, isSpecial)
-            self.player.x = newX
-            self.player.y = newY
+            self.player.x, self.player.y = newX, newY
             updateFOV(self)
             monsterTurns(self, isSpecial)
             self.turn = self.turn + 1
@@ -732,10 +724,9 @@ local function handleMovement(self, newX, newY, dungeon, monsters, items, isSpec
         end
     end
 
-    -- Normal walk
+    -- Normal movement
     self.sounds:play("walk")
-    self.player.x = newX
-    self.player.y = newY
+    self.player.x, self.player.y = newX, newY
     updateFOV(self)
     monsterTurns(self, isSpecial)
     self.turn = self.turn + 1
