@@ -285,12 +285,17 @@ local ITEM_EFFECTS = {
 }
 
 local ITEM_APPEARANCE = {
+    -- Basic items
     ["Gold"] = { char = "♦", color = { 1, 0.8, 0.2 } },
     ["Food"] = { char = "♠", color = { 0.9, 0.7, 0.3 } },
     ["Dagger"] = { char = "⚔", color = { 0.8, 0.8, 0.8 } },
     ["Leather Armor"] = { char = "⌺", color = { 0.6, 0.4, 0.2 } },
     ["Healing Potion"] = { char = "♣", color = { 1, 0.2, 0.2 } },
     ["Scroll"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
+
+    -- Keys
+    ["Key"] = { char = "⚷", color = { 0.8, 0.8, 0.8 } },
+    ["Special Key"] = { char = "⚷", color = { 1, 0.8, 0 } },
 
     -- Enhanced weapons
     ["Iron Sword"] = { char = "⚔", color = { 0.9, 0.9, 0.9 } },
@@ -315,10 +320,6 @@ local ITEM_APPEARANCE = {
     ["Scroll of Teleportation"] = { char = "⁂", color = { 1, 0.8, 1 } },
     ["Scroll of Identify"] = { char = "⁂", color = { 1, 1, 0.8 } },
     ["Scroll of Monster Confusion"] = { char = "⁂", color = { 0.8, 0.5, 1 } },
-
-    -- Keys
-    ["Key"] = { char = "⚷", color = { 0.8, 0.8, 0.8 } },
-    ["Special Key"] = { char = "⚷", color = { 1, 0.8, 0 } },
 }
 
 local function addTemporaryEffect(self, effectName, effect, player, currentTurn)

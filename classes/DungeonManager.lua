@@ -29,17 +29,7 @@ local TILES = {
     FLOOR = "▩",
     EXIT = "🚪",
     PLAYER = "♜",
-    GOLD = "♦",
-    FOOD = "♠",
-    WEAPON = "⚔",
-    ARMOR = "⌺",
-    POTION = "♣",
-    SCROLL = "⁂",
-    KEY = "⚷",           -- Regular key for exit door
-    SPECIAL_KEY = "⚷",   -- Special key for special rooms
-    LOCKED_DOOR = "🚪",
-    UNLOCKED_DOOR = "🚪",
-    SPECIAL_DOOR = "🚪",
+    DOOR = "🚪",
     SPECIAL_WALL = "▓"
 }
 
@@ -51,6 +41,16 @@ local MONSTERS = {
     { char = "⏄", name = "Bat", color = { 0.7, 0.5, 0.7 }, hp = 2, attack = 1, xp = 2 },
     { char = "⌘", name = "Spider", color = { 0.5, 0.4, 0.6 }, hp = 4, attack = 2, xp = 4 }
 }
+
+local function getItemTile(self, itemName)
+    local itemDef = self.itemManager:getItemDefinition(itemName)
+    return itemDef and itemDef.char or "?"
+end
+
+local function getItemColor(self, itemName)
+    local itemDef = self.itemManager:getItemDefinition(itemName)
+    return itemDef and itemDef.color or { 1, 1, 1 }
+end
 
 local function roomsIntersect(room1, room2)
     return room1.x <= room2.x + room2.w + 1
@@ -103,41 +103,32 @@ local function placeEntities(self, dungeon, monsters, items, player, room, isSpe
         local y = math_random(room.y + 1, room.y + room.h - 2)
 
         if not self:isBlocked(dungeon, monsters, player, x, y) then
-            local item
+            local itemName
+            local itemChar, itemColor
 
             if isSpecialRoom then
-                local enhancedItemName = self.itemManager:getRandomEnhancedItem()
-                local itemDefinition = self.itemManager:getItemDefinition(enhancedItemName)
-
-                if itemDefinition then
-                    item = {
-                        char = itemDefinition.char or TILES.SCROLL,
-                        name = enhancedItemName,
-                        color = itemDefinition.color or { 0.8, 0.6, 0.2 }
-                    }
-                else
-                    -- Fallback if ItemManager doesn't have definition
-                    item = {
-                        char = TILES.SCROLL,
-                        name = enhancedItemName,
-                        color = { 0.8, 0.6, 0.2 } -- Gold color for special items
-                    }
-                end
+                itemName = self.itemManager:getRandomEnhancedItem()
+                itemChar = getItemTile(self, itemName)
+                itemColor = getItemColor(self, itemName)
             else
                 local basicItems = self.itemManager:getBasicItemDefinitions()
-                item = basicItems[math_random(#basicItems)]
+                local basicItem = basicItems[math_random(#basicItems)]
+                itemName = basicItem.name
+                itemChar = basicItem.char
+                itemColor = basicItem.color
             end
 
             table_insert(items, {
                 x = x,
                 y = y,
-                char = item.char,
-                color = item.color,
-                name = item.name
+                char = itemChar,
+                color = itemColor,
+                name = itemName
             })
         end
     end
 end
+
 
 local function placeKey(self, dungeon, items, monsters, player, rooms, isSpecial)
     if #rooms < 2 then return false end -- Need at least 2 rooms
@@ -157,12 +148,13 @@ local function placeKey(self, dungeon, items, monsters, player, rooms, isSpecial
         local y = math_random(keyRoom.y + 1, keyRoom.y + keyRoom.h - 2)
 
         if not self:isBlocked(dungeon, monsters, player, x, y) then
+            local keyName = isSpecial and "Special Key" or "Key"
             table_insert(items, {
                 x = x,
                 y = y,
-                char = isSpecial and TILES.SPECIAL_KEY or TILES.KEY,
-                color = isSpecial and { 1, 0.8, 0 } or { 0.8, 0.8, 0.8 },
-                name = isSpecial and "Special Key" or "Key"
+                char = getItemTile(self, keyName),
+                color = getItemColor(self, keyName),
+                name = keyName
             })
             return true
         end
@@ -196,7 +188,7 @@ local function createSpecialDoor(dungeon, room)
     if doorX >= 1 and doorX <= DUNGEON_WIDTH and doorY >= 1 and doorY <= DUNGEON_HEIGHT then
         dungeon[doorY][doorX] = {
             type = "special_door",
-            char = TILES.SPECIAL_DOOR,
+            char = TILES.DOOR,
             color = { 0.8, 0.6, 0.2 },
             connectedRoom = room
         }
@@ -246,10 +238,10 @@ function DungeonManager:generateSpecialRoom()
     -- Generate a random room for the special room
     local w = math_random(SPECIAL_ROOM_MIN_SIZE, SPECIAL_ROOM_MAX_SIZE)
     local h = math_random(SPECIAL_ROOM_MIN_SIZE, SPECIAL_ROOM_MAX_SIZE)
-    local x = math_random(2, DUNGEON_WIDTH - w - 1)
-    local y = math_random(2, DUNGEON_HEIGHT - h - 1)
+    local gridX = math_random(2, DUNGEON_WIDTH - w - 1)
+    local gridY = math_random(2, DUNGEON_HEIGHT - h - 1)
 
-    local specialRoom = { x = x, y = y, w = w, h = h }
+    local specialRoom = { x = gridX, y = gridY, w = w, h = h }
 
     -- Create the special room
     for y = specialRoom.y, specialRoom.y + specialRoom.h do
@@ -292,7 +284,7 @@ function DungeonManager:generateSpecialRoom()
     if exitX >= 1 and exitX <= DUNGEON_WIDTH and exitY >= 1 and exitY <= DUNGEON_HEIGHT then
         specialDungeon[exitY][exitX] = {
             type = "special_exit",
-            char = TILES.UNLOCKED_DOOR,
+            char = TILES.DOOR,
             color = { 0.7, 0.7, 0.7 }
         }
     end
@@ -389,7 +381,7 @@ function DungeonManager:generateDungeon(player)
         local sy = math_random(lastRoom.y + 1, lastRoom.y + lastRoom.h - 2)
         dungeon[sy][sx] = {
             type = "locked_door",
-            char = TILES.LOCKED_DOOR,
+            char = TILES.DOOR,
             color = { 0.8, 0, 0 }
         }
     end
@@ -402,9 +394,7 @@ function DungeonManager:updateFOV(player, visibleTiles, exploredTiles)
 
     -- Reset visibility
     for y = 1, DUNGEON_HEIGHT do
-        for x = 1, DUNGEON_WIDTH do
-            visibleTiles[y][x] = false
-        end
+        for x = 1, DUNGEON_WIDTH do visibleTiles[y][x] = false end
     end
 
     -- Simple FOV - mark explored tiles
