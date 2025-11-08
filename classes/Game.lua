@@ -302,7 +302,7 @@ local function drawInventory(self)
             if isSelected then
                 -- Highlight background for selected item
                 lg.setColor(0.25, 0.25, 0.35, 0.8)
-                lg.rectangle("fill", panelX + 24, y - 4, panelW - 48, itemSpacing - 2, 6, 6)
+                lg.rectangle("fill", panelX + 24, y + 2, panelW - 48, itemSpacing - 2, 6, 6)
                 lg.setColor(1, 1, 0.6)
             else
                 lg.setColor(0.9, 0.9, 0.9)
