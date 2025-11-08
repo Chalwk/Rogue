@@ -136,7 +136,6 @@ local function placeEntities(self, dungeon, monsters, items, player, room, isSpe
                     }
                 end
             else
-                -- Regular rooms use basic items. TODO: change this
                 local basicItems = getBasicItemDefinitions()
                 item = basicItems[math_random(#basicItems)]
             end
