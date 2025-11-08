@@ -670,6 +670,68 @@ end
 
 function Game:tryOpenDoor() tryOpenDoor(self) end
 
+local function handleMovement(self, newX, newY, dungeon, monsters, items, isSpecial)
+    local tile = dungeon[newY][newX]
+
+    -- Wall check
+    if tile.type == "wall" then
+        addMessage(self, "You bump into a wall.")
+        self.sounds:play("bump")
+        return true
+    end
+
+    -- Special-only exit back to main dungeon
+    if isSpecial and tile.type == "special_exit" then
+        leaveSpecialRoom(self)
+        return true
+    end
+
+    -- Main dungeon special door check
+    if not isSpecial and tile.type == "special_door" then
+        addMessage(self, "You see a mysterious door. Press 'E' to enter.")
+        self.sounds:play("bump")
+        return true
+    end
+
+    -- Main dungeon exit to next level
+    if not isSpecial and tile.type == "EXIT" then
+        nextLevel(self)
+        return true
+    end
+
+    -- Monster check
+    for i, monster in ipairs(monsters) do
+        if monster.x == newX and monster.y == newY then
+            self.sounds:play("attack")
+            attackMonster(self, i, isSpecial)
+            return true
+        end
+    end
+
+    -- Item pickup
+    for i, item in ipairs(items) do
+        if item.x == newX and item.y == newY then
+            self.sounds:play("pickup")
+            pickupItem(self, i, isSpecial)
+            self.player.x = newX
+            self.player.y = newY
+            updateFOV(self)
+            monsterTurns(self, isSpecial)
+            self.turn = self.turn + 1
+            return true
+        end
+    end
+
+    -- Normal walk
+    self.sounds:play("walk")
+    self.player.x = newX
+    self.player.y = newY
+    updateFOV(self)
+    monsterTurns(self, isSpecial)
+    self.turn = self.turn + 1
+    return true
+end
+
 function Game:movePlayer(dx, dy)
     if self.gameOver then return end
 
@@ -677,117 +739,17 @@ function Game:movePlayer(dx, dy)
     local newY = self.player.y + dy
 
     -- Check bounds
-    if newX < 1 or newX > self.dungeonManager.DUNGEON_WIDTH or newY < 1 or newY > self.dungeonManager.DUNGEON_HEIGHT then
+    if newX < 1 or newX > self.dungeonManager.DUNGEON_WIDTH
+        or newY < 1 or newY > self.dungeonManager.DUNGEON_HEIGHT then
         addMessage(self, "You can't go that way!")
         self.sounds:play("bump")
         return
     end
 
     if self.inSpecialRoom then
-        -- Special room movement logic
-        local tile = self.specialRoomDungeon[newY][newX]
-
-        -- Check for walls
-        if tile.type == "wall" then
-            addMessage(self, "You bump into a wall.")
-            self.sounds:play("bump")
-            return
-        end
-
-        -- Check for special exit (back to main dungeon)
-        if tile.type == "special_exit" then
-            leaveSpecialRoom(self)
-            return
-        end
-
-        -- Check for monsters in special room
-        local attackedMonster = nil
-        for i, monster in ipairs(self.specialRoomMonsters) do
-            if monster.x == newX and monster.y == newY then
-                self.sounds:play("attack")
-                attackMonster(self, i, true)
-                attackedMonster = monster
-                break
-            end
-        end
-
-        if attackedMonster then return end
-
-        -- Check for items in special room
-        local pickedUpItem = false
-        for i, item in ipairs(self.specialRoomItems) do
-            if item.x == newX and item.y == newY then
-                self.sounds:play("pickup")
-                pickupItem(self, i, true)
-                pickedUpItem = true
-                break
-            end
-        end
-
-        if not pickedUpItem then self.sounds:play("walk") end
-
-        self.player.x = newX
-        self.player.y = newY
-
-        updateFOV(self)
-        monsterTurns(self, true)
-        self.turn = self.turn + 1
+        handleMovement(self, newX, newY, self.specialRoomDungeon, self.specialRoomMonsters, self.specialRoomItems, true)
     else
-        -- Main dungeon movement logic
-        local tile = self.dungeon[newY][newX]
-
-        -- Check for walls
-        if tile.type == "wall" then
-            addMessage(self, "You bump into a wall.")
-            self.sounds:play("bump")
-            return
-        end
-
-        -- Check for special doors
-        if tile.type == "special_door" then
-            addMessage(self, "You see a mysterious door. Press 'E' to enter.")
-            self.sounds:play("bump")
-            return
-        end
-
-        -- Check for monsters
-        local attackedMonster = nil
-        for i, monster in ipairs(self.monsters) do
-            if monster.x == newX and monster.y == newY then
-                self.sounds:play("attack")
-                attackMonster(self, i, false)
-                attackedMonster = monster
-                break
-            end
-        end
-
-        if attackedMonster then return end
-
-        -- Check for stairs
-        if tile.type == "EXIT" then
-            nextLevel(self)
-            return
-        end
-
-        -- Check for items
-        local pickedUpItem = false
-        for i, item in ipairs(self.items) do
-            if item.x == newX and item.y == newY then
-                self.sounds:play("pickup")
-                pickupItem(self, i, false)
-                pickedUpItem = true
-                break
-            end
-        end
-
-        if not pickedUpItem then self.sounds:play("walk") end
-
-        self.player.x = newX
-        self.player.y = newY
-
-        updateFOV(self)
-        monsterTurns(self, false)
-        self.turn = self.turn + 1
+        handleMovement(self, newX, newY, self.dungeon, self.monsters, self.items)
     end
 end
 
