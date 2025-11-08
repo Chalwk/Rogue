@@ -17,20 +17,44 @@ local DUNGEON_HEIGHT = 40
 local ROOM_MIN_SIZE = 4
 local ROOM_MAX_SIZE = 10
 local MAX_ROOMS = 20
-local FLOOR_COLOR = { 0.35, 0.35, 0.35, 0.3 }
+local FLOOR_COLORS = {
+    { 0.35, 0.35, 0.35, 0.3 }, -- Standard gray
+    { 0.4,  0.35, 0.3,  0.3 }, -- Brownish stone
+    { 0.3,  0.35, 0.4,  0.3 }, -- Bluish stone
+    { 0.38, 0.32, 0.28, 0.3 }  -- Earth tone
+}
+local WALL_COLORS = {
+    { 0.3,  0.3,  0.5 }, -- Standard blue-gray
+    { 0.35, 0.3,  0.45 }, -- Purple-gray
+    { 0.25, 0.35, 0.4 }, -- Blue-gray
+    { 0.4,  0.25, 0.3 }  -- Red-gray
+}
 local SPECIAL_ROOM_CHANCE = 0.3
-local SPECIAL_WALL_COLOR = { 0.6, 0.3, 0.6 }
+local SPECIAL_WALL_COLORS = {
+    { 0.6, 0.3, 0.6 }, -- Purple
+    { 0.7, 0.4, 0.2 }, -- Orange
+    { 0.3, 0.6, 0.6 }  -- Teal
+}
 local SPECIAL_ROOM_MIN_SIZE = 6
 local SPECIAL_ROOM_MAX_SIZE = 12
+local DECORATION_CHANCE = 0.08
 
 -- ASCII characters for display
 local TILES = {
-    WALL = "▥",
-    FLOOR = "▩",
+    WALL = "▓",
+    WALL_ALT = "▒",
+    WALL_CORNER = "┼",
+    FLOOR = "·",
+    FLOOR_ALT = "•",
+    FLOOR_DUST = "˙",
     EXIT = "🚪",
     PLAYER = "♜",
-    DOOR = "🚪",
-    SPECIAL_WALL = "▓"
+    DOOR = "▣",
+    SPECIAL_WALL = "◙",
+    SPECIAL_FLOOR = "✦",
+    PILLAR = "█",
+    CRACK = "░",
+    MOSS = "♣"
 }
 
 local MONSTERS = {
@@ -41,6 +65,18 @@ local MONSTERS = {
     { char = "⏄", name = "Bat", color = { 0.7, 0.5, 0.7 }, hp = 2, attack = 1, xp = 2 },
     { char = "⌘", name = "Spider", color = { 0.5, 0.4, 0.6 }, hp = 4, attack = 2, xp = 4 }
 }
+
+local function getRandomFloorColor()
+    return FLOOR_COLORS[math_random(#FLOOR_COLORS)]
+end
+
+local function getRandomWallColor()
+    return WALL_COLORS[math_random(#WALL_COLORS)]
+end
+
+local function getRandomSpecialWallColor()
+    return SPECIAL_WALL_COLORS[math_random(#SPECIAL_WALL_COLORS)]
+end
 
 local function getItemTile(self, itemName)
     local itemDef = self.itemManager:getItemDefinition(itemName)
@@ -65,12 +101,59 @@ local function createTunnel(dungeon, room1, room2)
     local x2 = math_floor(room2.x + room2.w / 2)
     local y2 = math_floor(room2.y + room2.h / 2)
 
-    -- Horizontal tunnel then vertical
-    for x = math_min(x1, x2), math_max(x1, x2) do
-        dungeon[y1][x] = { type = "floor", char = TILES.FLOOR, color = FLOOR_COLOR }
+    -- Choose random floor style for this tunnel
+    local floorChar = math_random() < 0.7 and TILES.FLOOR or TILES.FLOOR_ALT
+    local floorColor = getRandomFloorColor()
+
+    -- Create winding tunnel with some randomness
+    local currentX, currentY = x1, y1
+
+    -- Horizontal section with slight variation
+    while currentX ~= x2 do
+        dungeon[currentY][currentX] = { type = "floor", char = floorChar, color = floorColor }
+        -- Add occasional decorative cracks
+        if math_random() < 0.1 then
+            dungeon[currentY][currentX] = { type = "floor", char = TILES.CRACK, color = { 0.2, 0.2, 0.2, 0.5 } }
+        end
+        currentX = currentX + (x2 > currentX and 1 or -1)
     end
-    for y = math_min(y1, y2), math_max(y1, y2) do
-        dungeon[y][x2] = { type = "floor", char = TILES.FLOOR, color = FLOOR_COLOR }
+
+    -- Vertical section with slight variation
+    while currentY ~= y2 do
+        dungeon[currentY][currentX] = { type = "floor", char = floorChar, color = floorColor }
+        -- Add occasional decorative cracks
+        if math_random() < 0.1 then
+            dungeon[currentY][currentX] = { type = "floor", char = TILES.CRACK, color = { 0.2, 0.2, 0.2, 0.5 } }
+        end
+        currentY = currentY + (y2 > currentY and 1 or -1)
+    end
+end
+
+local function addRoomDecorations(dungeon, room)
+    -- Add pillars in larger rooms
+    if room.w >= 6 and room.h >= 6 then
+        local numPillars = math_random(1, 2)
+        for i = 1, numPillars do
+            local pillarX = math_random(room.x + 2, room.x + room.w - 2)
+            local pillarY = math_random(room.y + 2, room.y + room.h - 2)
+            dungeon[pillarY][pillarX] = { type = "wall", char = TILES.PILLAR, color = { 0.5, 0.5, 0.6 } }
+        end
+    end
+
+    -- Add moss patches on walls occasionally
+    for y = room.y - 1, room.y + room.h + 1 do
+        for x = room.x - 1, room.x + room.w + 1 do
+            if (y == room.y - 1 or y == room.y + room.h + 1 or
+                    x == room.x - 1 or x == room.x + room.w + 1) then
+                if dungeon[y] and dungeon[y][x] and dungeon[y][x].type == "wall" and math_random() < 0.05 then
+                    dungeon[y][x] = {
+                        type = "wall",
+                        char = TILES.MOSS,
+                        color = { 0.2, 0.6, 0.3 }
+                    }
+                end
+            end
+        end
     end
 end
 
@@ -129,13 +212,12 @@ local function placeEntities(self, dungeon, monsters, items, player, room, isSpe
     end
 end
 
-
 local function placeKey(self, dungeon, items, monsters, player, rooms, isSpecial)
     if #rooms < 2 then return false end -- Need at least 2 rooms
 
     local keyRoomIndex
     if isSpecial then
-        keyRoomIndex = math_random(2, #rooms) -- Exclude first room where player starts
+        keyRoomIndex = math_random(2, #rooms)     -- Exclude first room where player starts
     else
         keyRoomIndex = math_random(2, #rooms - 1) -- Exclude exit & first room
     end
@@ -199,10 +281,21 @@ local function createSpecialDoor(dungeon, room)
 end
 
 local function createBasicRoom(dungeon, room)
-    -- Create floor
+    local floorColor = getRandomFloorColor()
+    local wallColor = getRandomWallColor()
+
+    -- Create floor with variety
     for y = room.y, room.y + room.h do
         for x = room.x, room.x + room.w do
-            dungeon[y][x] = { type = "floor", char = TILES.FLOOR, color = FLOOR_COLOR }
+            local floorChar
+            if math_random() < 0.8 then
+                floorChar = TILES.FLOOR
+            elseif math_random() < 0.5 then
+                floorChar = TILES.FLOOR_ALT
+            else
+                floorChar = TILES.FLOOR_DUST
+            end
+            dungeon[y][x] = { type = "floor", char = floorChar, color = floorColor }
         end
     end
 
@@ -212,11 +305,20 @@ local function createBasicRoom(dungeon, room)
             if y == room.y - 1 or y == room.y + room.h + 1 or
                 x == room.x - 1 or x == room.x + room.w + 1 then
                 if dungeon[y] and dungeon[y][x] and dungeon[y][x].type ~= "floor" then
-                    dungeon[y][x] = { type = "wall", char = TILES.WALL, color = { 0.3, 0.3, 0.5 } }
+                    local wallChar
+                    if math_random() < 0.7 then
+                        wallChar = TILES.WALL
+                    else
+                        wallChar = TILES.WALL_ALT
+                    end
+                    dungeon[y][x] = { type = "wall", char = wallChar, color = wallColor }
                 end
             end
         end
     end
+
+    -- Add decorations to the room
+    if math_random() < DECORATION_CHANCE then addRoomDecorations(dungeon, room) end
 end
 
 function DungeonManager:generateSpecialRoom()
@@ -225,12 +327,16 @@ function DungeonManager:generateSpecialRoom()
     local items = {}
     local visibleTiles = {}
 
+    local specialWallColor = getRandomSpecialWallColor()
+    local specialFloorColor = { 0.45, 0.4, 0.5, 0.4 }
+
     -- Initialize special dungeon with walls
     for y = 1, DUNGEON_HEIGHT do
         specialDungeon[y] = {}
         visibleTiles[y] = {}
         for x = 1, DUNGEON_WIDTH do
-            specialDungeon[y][x] = { type = "wall", char = TILES.WALL, color = SPECIAL_WALL_COLOR }
+            local wallChar = math_random() < 0.7 and TILES.SPECIAL_WALL or TILES.WALL
+            specialDungeon[y][x] = { type = "wall", char = wallChar, color = specialWallColor }
             visibleTiles[y][x] = false
         end
     end
@@ -243,24 +349,28 @@ function DungeonManager:generateSpecialRoom()
 
     local specialRoom = { x = gridX, y = gridY, w = w, h = h }
 
-    -- Create the special room
+    -- Create the special room with magical flooring
     for y = specialRoom.y, specialRoom.y + specialRoom.h do
         for x = specialRoom.x, specialRoom.x + specialRoom.w do
-            specialDungeon[y][x] = { type = "floor", char = TILES.FLOOR, color = FLOOR_COLOR }
+            local floorChar = math_random() < 0.7 and TILES.SPECIAL_FLOOR or TILES.FLOOR
+            specialDungeon[y][x] = { type = "floor", char = floorChar, color = specialFloorColor }
         end
     end
 
-    -- Create walls around special room
+    -- Create enhanced walls around special room
     for y = specialRoom.y - 1, specialRoom.y + specialRoom.h + 1 do
         for x = specialRoom.x - 1, specialRoom.x + specialRoom.w + 1 do
             if y == specialRoom.y - 1 or y == specialRoom.y + specialRoom.h + 1 or
                 x == specialRoom.x - 1 or x == specialRoom.x + specialRoom.w + 1 then
                 if specialDungeon[y] and specialDungeon[y][x] then
-                    specialDungeon[y][x] = { type = "wall", char = TILES.WALL, color = SPECIAL_WALL_COLOR }
+                    local wallChar = math_random() < 0.6 and TILES.SPECIAL_WALL or TILES.WALL_CORNER
+                    specialDungeon[y][x] = { type = "wall", char = wallChar, color = specialWallColor }
                 end
             end
         end
     end
+
+    addRoomDecorations(specialDungeon, specialRoom)
 
     -- Place exit door (back to main dungeon) on a random wall
     local exitWall = math_random(1, 4)
@@ -285,7 +395,7 @@ function DungeonManager:generateSpecialRoom()
         specialDungeon[exitY][exitX] = {
             type = "special_exit",
             char = TILES.DOOR,
-            color = { 0.7, 0.7, 0.7 }
+            color = { 0.7, 0.7, 0.9 } -- Lighter, magical door
         }
     end
 
@@ -308,7 +418,8 @@ function DungeonManager:generateDungeon(player)
         visibleTiles[y] = {}
         if not self.exploredTiles[y] then self.exploredTiles[y] = {} end
         for x = 1, DUNGEON_WIDTH do
-            dungeon[y][x] = { type = "wall", char = TILES.WALL, color = { 0.3, 0.3, 0.5 } }
+            local wallChar = math_random() < 0.8 and TILES.WALL or TILES.WALL_ALT
+            dungeon[y][x] = { type = "wall", char = wallChar, color = getRandomWallColor() }
             visibleTiles[y][x] = false
             if self.exploredTiles[y][x] == nil then self.exploredTiles[y][x] = false end
         end
