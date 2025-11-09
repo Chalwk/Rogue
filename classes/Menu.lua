@@ -2,53 +2,53 @@
 -- License: MIT
 -- Copyright (c) 2025 Jericho Crosby (Chalwk)
 
-local ipairs, math_sin, math_floor = ipairs, math.sin, math.floor
+local ipairs, math_sin = ipairs, math.sin
 
 local BUTTON_DATA = {
     MENU = {
-        { text = "Start Game", action = "start",   width = 240, height = 55, color = { 0.2, 0.7, 0.3 } },
-        { text = "Options",    action = "options", width = 240, height = 55, color = { 0.3, 0.5, 0.8 } },
-        { text = "Quit Game",  action = "quit",    width = 240, height = 55, color = { 0.8, 0.3, 0.3 } }
+        { text = "START GAME", action = "start",   width = 240, height = 45, color = { 0.8, 0.1, 0.1 } }, -- Red like old CRT monitors
+        { text = "OPTIONS",    action = "options", width = 240, height = 45, color = { 0.1, 0.6, 0.8 } }, -- Cyan terminal color
+        { text = "QUIT GAME",  action = "quit",    width = 240, height = 45, color = { 0.6, 0.6, 0.1 } }  -- Amber like old displays
     },
     OPTIONS = {
         DIFFICULTY = {
-            { text = "Easy",   action = "diff easy",   width = 110, height = 40, color = { 0.3, 0.8, 0.4 } },
-            { text = "Medium", action = "diff medium", width = 110, height = 40, color = { 0.9, 0.7, 0.2 } },
-            { text = "Hard",   action = "diff hard",   width = 110, height = 40, color = { 0.8, 0.3, 0.3 } }
+            { text = "EASY",   action = "diff easy",   width = 100, height = 35, color = { 0.1, 0.7, 0.1 } }, -- Green
+            { text = "MEDIUM", action = "diff medium", width = 100, height = 35, color = { 0.9, 0.7, 0.1 } }, -- Amber
+            { text = "HARD",   action = "diff hard",   width = 100, height = 35, color = { 0.8, 0.1, 0.1 } }  -- Red
         },
         CHARACTER = {
-            { text = "Warrior", action = "char warrior", width = 130, height = 40, color = { 0.8, 0.3, 0.3 } },
-            { text = "jc",      action = "char jc",      width = 130, height = 40, color = { 0.3, 0.7, 0.3 } },
-            { text = "Wizard",  action = "char wizard",  width = 130, height = 40, color = { 0.3, 0.5, 0.8 } }
+            { text = "WARRIOR", action = "char warrior", width = 120, height = 35, color = { 0.8, 0.3, 0.1 } }, -- Orange
+            { text = "ROGUE",   action = "char rogue",   width = 120, height = 35, color = { 0.1, 0.7, 0.1 } }, -- Green
+            { text = "WIZARD",  action = "char wizard",  width = 120, height = 35, color = { 0.3, 0.5, 0.8 } }  -- Blue
         },
         NAVIGATION = {
-            { text = "Back to Menu", action = "back", width = 180, height = 45, color = { 0.6, 0.6, 0.6 } }
+            { text = "BACK", action = "back", width = 160, height = 40, color = { 0.4, 0.4, 0.4 } } -- Gray
         }
     }
 }
 
 local HELP_TEXT = {
-    "Welcome to JeriCraft: Dungeon Crawler!",
+    "JERICRAFT: DUNGEON CRAWLER",
     "",
-    "Gameplay:",
-    "• Explore randomly generated dungeons",
-    "• Fight monsters and collect treasure",
-    "• Find the doors to descend deeper",
-    "• Survive as long as you can!",
+    "GAMEPLAY:",
+    "• EXPLORE RANDOMLY GENERATED DUNGEONS",
+    "• FIGHT MONSTERS AND COLLECT TREASURE",
+    "• FIND THE DOORS TO DESCEND DEEPER",
+    "• SURVIVE AS LONG AS YOU CAN!",
     "",
-    "Controls:",
-    "• Movement: Arrow Keys / WASD",
-    "• Wait: Spacebar",
-    "• Rest: R (heals slowly)",
-    "• Inventory: I",
-    "• Menu: ESC",
+    "CONTROLS:",
+    "• MOVEMENT: ARROW KEYS / WASD",
+    "• WAIT: SPACEBAR",
+    "• REST: R (HEALS SLOWLY)",
+    "• INVENTORY: I",
+    "• MENU: ESC",
     "",
-    "Symbols:",
-    "♜ - You",
-    "▥ - Walls",
-    "▩ - Floor",
-    "🚪 - Doors",
-    "Click anywhere to close"
+    "SYMBOLS:",
+    "♜ - YOU",
+    "▥ - WALLS",
+    "▩ - FLOOR",
+    "🚪 - DOORS",
+    "CLICK ANYWHERE TO CLOSE"
 }
 
 local lg = love.graphics
@@ -57,10 +57,10 @@ local Menu = {}
 Menu.__index = Menu
 
 local LAYOUT = {
-    DIFF_BUTTON = { W = 110, H = 40, SPACING = 20 },
-    CHAR_BUTTON = { W = 130, H = 40, SPACING = 20, GRID_SPACING = 15 },
+    DIFF_BUTTON = { W = 100, H = 35, SPACING = 15 },
+    CHAR_BUTTON = { W = 120, H = 35, SPACING = 15, GRID_SPACING = 12 },
     TOTAL_SECTIONS_HEIGHT = 280,
-    HELP_BOX = { W = 650, H = 700, LINE_HEIGHT = 20 }
+    HELP_BOX = { W = 600, H = 650, LINE_HEIGHT = 18 }
 }
 
 local function initButton(button, x, y, section)
@@ -80,7 +80,7 @@ local function updateOptionsButtonPositions(self)
 
     -- Character buttons
     local char = LAYOUT.CHAR_BUTTON
-    local charTotalW = 2 * char.W + char.SPACING
+    local charTotalW = 3 * char.W + 2 * char.SPACING
     local charStartX = centerX - charTotalW * 0.5
     local charY = startY + 120
 
@@ -94,8 +94,8 @@ local function updateOptionsButtonPositions(self)
             button.y = diffY
         elseif button.section == "character" then
             local index = i - 4 -- Offset for difficulty buttons
-            button.x = charStartX + (index % 2) * (char.W + char.SPACING)
-            button.y = charY + math_floor(index * 0.5) * (char.H + char.GRID_SPACING)
+            button.x = charStartX + (index - 1) * (char.W + char.SPACING)
+            button.y = charY
         elseif button.section == "navigation" then
             button.x = centerX - button.width * 0.5
             button.y = navY
@@ -104,10 +104,10 @@ local function updateOptionsButtonPositions(self)
 end
 
 local function updateButtonPositions(self)
-    local startY = self.screenHeight * 0.5 - 80
+    local startY = self.screenHeight * 0.5 - 60
     for i, button in ipairs(self.menuButtons) do
         button.x = (self.screenWidth - button.width) * 0.5
-        button.y = startY + (i - 1) * 70
+        button.y = startY + (i - 1) * 60
     end
     self.helpButton.y = self.screenHeight - 60
 end
@@ -127,12 +127,12 @@ local function createMenuButtons(self)
     self.helpButton = initButton({
         text = "?",
         action = "help",
-        width = 50,
-        height = 50,
-        x = 10,
-        y = self.screenHeight - 30,
+        width = 40,
+        height = 40,
+        x = 20,
+        y = self.screenHeight - 60,
         color = { 0.3, 0.6, 0.9 }
-    }, 10, self.screenHeight - 30, "help")
+    }, 20, self.screenHeight - 60, "help")
 
     updateButtonPositions(self)
 end
@@ -179,18 +179,46 @@ local function createOptionsButtons(self)
     updateOptionsButtonPositions(self)
 end
 
-local function drawButton(self, button)
+local function drawRetroButton(self, button)
     local isHovered = self.buttonHover == button.action
-    local pulse = math_sin(self.time * 6) * 0.1 + 0.9
+    local r, g, b = button.color[1], button.color[2], button.color[3]
 
-    -- Button background
-    lg.setColor(button.color[1], button.color[2], button.color[3], isHovered and 0.9 or 0.7)
-    lg.rectangle("fill", button.x, button.y, button.width, button.height, 10)
+    -- Button background with scanline effect
+    for y = button.y, button.y + button.height, 2 do
+        local alpha = 0.3 + (y % 4) * 0.1
+        lg.setColor(r * 0.3, g * 0.3, b * 0.3, alpha)
+        lg.rectangle("fill", button.x, y, button.width, 1)
+    end
 
-    -- Button border
-    lg.setColor(1, 1, 1, isHovered and 1 or 0.8)
-    lg.setLineWidth(isHovered and 3 or 2)
-    lg.rectangle("line", button.x, button.y, button.width, button.height, 10)
+    -- Main button fill
+    lg.setColor(r * 0.6, g * 0.6, b * 0.6, 0.8)
+    lg.rectangle("fill", button.x, button.y, button.width, button.height)
+
+    -- CRT scanline overlay
+    for y = button.y + 1, button.y + button.height - 1, 2 do
+        lg.setColor(0, 0, 0, 0.1)
+        lg.rectangle("fill", button.x, y, button.width, 1)
+    end
+
+    -- Border with 80s computer aesthetic
+    lg.setLineWidth(2)
+
+    -- Outer border (dark)
+    lg.setColor(0.1, 0.1, 0.1, 0.9)
+    lg.rectangle("line", button.x, button.y, button.width, button.height)
+
+    -- Inner highlight (bright)
+    lg.setColor(r * 1.2, g * 1.2, b * 1.2, 1)
+    lg.line(button.x + 1, button.y + 1, button.x + button.width - 2, button.y + 1)  -- top
+    lg.line(button.x + 1, button.y + 1, button.x + 1, button.y + button.height - 2) -- left
+
+    -- Hover effect - brighter border
+    if isHovered then
+        lg.setColor(1, 1, 1, 0.8)
+        lg.setLineWidth(3)
+        lg.rectangle("line", button.x - 1, button.y - 1, button.width + 2, button.height + 2)
+        lg.setLineWidth(2)
+    end
 
     -- Button text
     local font = self.fonts:getFont("mediumFont")
@@ -201,40 +229,74 @@ local function drawButton(self, button)
     local textX = button.x + (button.width - textWidth) * 0.5
     local textY = button.y + (button.height - textHeight) * 0.5
 
-    -- Text shadow
-    lg.setColor(0, 0, 0, 0.5)
+    -- Text shadow for depth
+    lg.setColor(0, 0, 0, 0.7)
     lg.print(button.text, textX + 2, textY + 2)
 
-    -- Main text
-    lg.setColor(1, 1, 1, pulse)
+    -- Main text with slight glow on hover
+    if isHovered then
+        lg.setColor(1, 1, 1, 1)       -- Bright white when hovered
+    else
+        lg.setColor(0.9, 0.9, 0.7, 1) -- Amber color for text
+    end
     lg.print(button.text, textX, textY)
 
     lg.setLineWidth(1)
 end
 
-local function drawHelpButton(self)
+local function drawRetroHelpButton(self)
     local button = self.helpButton
     local isHovered = self.buttonHover == "help"
-    local pulse = math_sin(self.time * 5) * 0.2 + 0.8
-    local centerX, centerY = button.x + button.width * 0.5, button.y + button.height * 0.5
 
-    -- Button background
-    lg.setColor(button.color[1], button.color[2], button.color[3], isHovered and 0.9 or 0.7)
+    -- Button background with scanlines
+    for y = button.y, button.y + button.height, 2 do
+        local alpha = 0.3 + (y % 4) * 0.1
+        lg.setColor(0.3, 0.6, 0.9, alpha)
+        lg.rectangle("fill", button.x, y, button.width, 1)
+    end
+
+    -- Main circle
+    local centerX, centerY = button.x + button.width * 0.5, button.y + button.height * 0.5
+    lg.setColor(0.3, 0.6, 0.9, 0.8)
     lg.circle("fill", centerX, centerY, button.width * 0.5)
 
-    -- Button border
-    lg.setColor(1, 1, 1, isHovered and 1 or 0.8)
-    lg.setLineWidth(isHovered and 3 or 2)
+    -- CRT scanline effect
+    for y = button.y + 1, button.y + button.height - 1, 2 do
+        lg.setColor(0, 0, 0, 0.1)
+        lg.rectangle("fill", button.x, y, button.width, 1)
+    end
+
+    -- Border
+    lg.setLineWidth(2)
+    lg.setColor(0.1, 0.1, 0.1, 0.9)
     lg.circle("line", centerX, centerY, button.width * 0.5)
+    lg.setColor(0.6, 0.8, 1, 1)
+    lg.circle("line", centerX, centerY, button.width * 0.5 - 1)
+
+    -- Hover effect
+    if isHovered then
+        lg.setColor(1, 1, 1, 0.8)
+        lg.setLineWidth(3)
+        lg.circle("line", centerX, centerY, button.width * 0.5 + 2)
+        lg.setLineWidth(2)
+    end
 
     -- Question mark
-    lg.setColor(1, 1, 1, pulse)
     local font = self.fonts:getFont("mediumFont")
     self.fonts:setFont(font)
 
     local textWidth = font:getWidth(button.text)
     local textHeight = font:getHeight()
 
+    lg.setColor(0, 0, 0, 0.7)
+    lg.print(button.text, button.x + (button.width - textWidth) * 0.5 + 1,
+        button.y + (button.height - textHeight) * 0.5 + 1)
+
+    if isHovered then
+        lg.setColor(1, 1, 1, 1)
+    else
+        lg.setColor(0.9, 0.9, 0.7, 1)
+    end
     lg.print(button.text, button.x + (button.width - textWidth) * 0.5, button.y + (button.height - textHeight) * 0.5)
 
     lg.setLineWidth(1)
@@ -243,70 +305,113 @@ end
 local function drawOptionSection(self, section)
     for _, button in ipairs(self.optionsButtons) do
         if button.section == section then
-            drawButton(self, button)
+            drawRetroButton(self, button)
 
-            -- Draw selection indicator
+            -- Draw selection indicator with retro style
             local actionType, value = button.action:match("^(%w+) (.+)$")
             if (actionType == "diff" and value == self.difficulty) or
                 (actionType == "char" and value == self.character) then
-                lg.setColor(0.2, 0.8, 0.2, 0.3)
-                lg.rectangle("fill", button.x - 5, button.y - 5, button.width + 10, button.height + 10, 8)
-                lg.setColor(0.2, 1, 0.2, 0.8)
-                lg.setLineWidth(3)
-                lg.rectangle("line", button.x - 5, button.y - 5, button.width + 10, button.height + 10, 8)
-                lg.setLineWidth(1)
+                -- Retro selection box with scanlines
+                lg.setColor(0.1, 0.8, 0.1, 0.2)
+                lg.rectangle("fill", button.x - 6, button.y - 6, button.width + 12, button.height + 12)
+
+                -- Blinking border for selection
+                local blink = math_sin(self.time * 8) > 0
+                if blink then
+                    lg.setColor(0.1, 1, 0.1, 0.8)
+                    lg.setLineWidth(2)
+                    lg.rectangle("line", button.x - 6, button.y - 6, button.width + 12, button.height + 12)
+
+                    -- Corner brackets for extra retro feel
+                    local bracketSize = 8
+                    lg.line(button.x - 6, button.y - 6, button.x - 6 + bracketSize, button.y - 6) -- top-left horizontal
+                    lg.line(button.x - 6, button.y - 6, button.x - 6, button.y - 6 + bracketSize) -- top-left vertical
+
+                    lg.line(button.x + button.width + 6, button.y - 6, button.x + button.width + 6 - bracketSize,
+                        button.y - 6)               -- top-right horizontal
+                    lg.line(button.x + button.width + 6, button.y - 6, button.x + button.width + 6,
+                        button.y - 6 + bracketSize) -- top-right vertical
+
+                    lg.line(button.x - 6, button.y + button.height + 6, button.x - 6 + bracketSize,
+                        button.y + button.height + 6)               -- bottom-left horizontal
+                    lg.line(button.x - 6, button.y + button.height + 6, button.x - 6,
+                        button.y + button.height + 6 - bracketSize) -- bottom-left vertical
+
+                    lg.line(button.x + button.width + 6, button.y + button.height + 6,
+                        button.x + button.width + 6 - bracketSize, button.y + button.height + 6) -- bottom-right horizontal
+                    lg.line(button.x + button.width + 6, button.y + button.height + 6, button.x + button.width + 6,
+                        button.y + button.height + 6 - bracketSize)                              -- bottom-right vertical
+
+                    lg.setLineWidth(1)
+                end
             end
         end
     end
 end
 
-local function drawHelpOverlay(self, screenWidth, screenHeight)
-    -- Overlay background
-    for i = 1, 3 do
-        local alpha = 0.9 - (i * 0.2)
-        lg.setColor(0, 0, 0, alpha)
+local function drawRetroHelpOverlay(self, screenWidth, screenHeight)
+    -- Old CRT monitor overlay effect
+    for i = 1, 4 do
+        local alpha = 0.95 - (i * 0.2)
+        lg.setColor(0, 0.1, 0, alpha) -- Dark green like old monitors
         lg.rectangle("fill", -i, -i, screenWidth + i * 2, screenHeight + i * 2)
     end
 
-    -- Help box
+    -- Help box with CRT bezel
     local box = LAYOUT.HELP_BOX
     local boxX = (screenWidth - box.W) * 0.5
     local boxY = (screenHeight - box.H) * 0.5
 
-    -- Box background with gradient
+    -- Box background with phosphor glow effect
     for y = boxY, boxY + box.H do
         local progress = (y - boxY) / box.H
-        local r = 0.08 + progress * 0.1
-        local g = 0.1 + progress * 0.1
-        local b = 0.15 + progress * 0.1
+        local r = 0.05 + progress * 0.05
+        local g = 0.15 + progress * 0.1
+        local b = 0.08 + progress * 0.05
         lg.setColor(r, g, b, 0.98)
         lg.line(boxX, y, boxX + box.W, y)
     end
 
-    -- Box border
-    lg.setColor(0.3, 0.6, 0.9, 0.8)
+    -- Add scanlines to the box
+    for y = boxY + 2, boxY + box.H - 2, 3 do
+        lg.setColor(0, 0.2, 0, 0.1)
+        lg.rectangle("fill", boxX, y, box.W, 1)
+    end
+
+    -- Box border with old computer aesthetic
+    lg.setColor(0.3, 0.8, 0.3, 0.9)
     lg.setLineWidth(4)
-    lg.rectangle("line", boxX, boxY, box.W, box.H, 12)
+    lg.rectangle("line", boxX, boxY, box.W, box.H)
 
-    -- Title
-    lg.setColor(1, 1, 1)
+    -- Inner bevel
+    lg.setColor(0.6, 1, 0.6, 0.6)
+    lg.setLineWidth(2)
+    lg.rectangle("line", boxX + 2, boxY + 2, box.W - 4, box.H - 4)
+
+    -- Title with retro computer style
+    lg.setColor(0.8, 1, 0.8, 1)
     self.fonts:setFont("mediumFont")
-    lg.printf("JeriCraft: Dungeon Crawler - How to Play", boxX, boxY + 25, box.W, "center")
+    lg.printf("JERICRAFT: DUNGEON CRAWLER", boxX, boxY + 20, box.W, "center")
 
-    -- Help text
-    lg.setColor(0.9, 0.9, 0.9)
+    -- Help text in classic terminal green
     self.fonts:setFont("smallFont")
 
     for i, line in ipairs(HELP_TEXT) do
-        local y = boxY + 90 + (i - 1) * box.LINE_HEIGHT
-        lg.setColor(line:sub(1, 2) == "• " and { 0.5, 0.8, 1 } or { 0.9, 0.9, 0.9 })
-        lg.printf(line, boxX + 40, y, box.W - 80, "left")
+        local y = boxY + 80 + (i - 1) * box.LINE_HEIGHT
+        if line:sub(1, 2) == "• " then
+            lg.setColor(0.6, 0.9, 0.6, 1)   -- Bright green for bullet points
+        elseif line == "" then
+            lg.setColor(0.3, 0.7, 0.3, 0.5) -- Dim green for empty lines
+        else
+            lg.setColor(0.5, 0.8, 0.5, 1)   -- Regular green for text
+        end
+        lg.printf(line, boxX + 30, y, box.W - 60, "left")
     end
 
     lg.setLineWidth(1)
 end
 
-local function drawDungeonTitle(self, screenWidth, screenHeight)
+local function drawRetroTitle(self, screenWidth, screenHeight)
     local centerX, centerY = screenWidth * 0.5, screenHeight * 0.2
 
     lg.push()
@@ -318,13 +423,23 @@ local function drawDungeonTitle(self, screenWidth, screenHeight)
 
     local height_offset = 55
 
-    -- Title shadow
-    lg.setColor(0, 0, 0, 0.5)
-    lg.printf(self.title.text, -300 + 4, -font:getHeight() * 0.5 + 4 - height_offset, 600, "center")
+    -- Title shadow with multiple offsets for retro depth
+    lg.setColor(0, 0.3, 0, 0.8)
+    for i = 1, 3 do
+        lg.printf(self.title.text, -300 + i, -font:getHeight() * 0.5 + i - height_offset, 600, "center")
+    end
 
-    -- Title main
-    lg.setColor(0.9, 0.2, 0.2, self.title.glow)
+    -- Main title with phosphor glow effect
+    local glow = math_sin(self.time * 4) * 0.2 + 0.8
+    lg.setColor(0.2, 0.9, 0.2, glow)
     lg.printf(self.title.text, -300, -font:getHeight() * 0.5 - height_offset, 600, "center")
+
+    -- Subtle scanline effect over title
+    lg.setColor(0, 0.1, 0, 0.1)
+    for y = -font:getHeight() * 0.5 - height_offset - 5, -font:getHeight() * 0.5 - height_offset + font:getHeight() + 5, 2 do
+        lg.line(-320, y, 320, y)
+    end
+
     lg.pop()
 end
 
@@ -336,9 +451,9 @@ function Menu.new(fontManager)
     instance.difficulty = "medium"
     instance.character = "warrior"
     instance.title = {
-        text = "JeriCraft: Dungeon Crawler",
+        text = "JERICRAFT: DUNGEON CRAWLER",
         subtitle =
-        "Explore dungeons, fight monsters, and find treasure!\nSurvive as long as you can in this dungeon crawler!",
+        "EXPLORE DUNGEONS, FIGHT MONSTERS, AND FIND TREASURE!\nSURVIVE AS LONG AS YOU CAN IN THIS DUNGEON CRAWLER!",
         scale = 1,
         scaleDirection = 1,
         scaleSpeed = 0.4,
@@ -404,21 +519,22 @@ end
 function Menu:draw(screenWidth, screenHeight, state)
     self.state = state
 
-    drawDungeonTitle(self, screenWidth, screenHeight)
+    drawRetroTitle(self, screenWidth, screenHeight)
 
     if state == "menu" then
         if self.showHelp then
-            drawHelpOverlay(self, screenWidth, screenHeight)
+            drawRetroHelpOverlay(self, screenWidth, screenHeight)
         else
             for _, button in ipairs(self.menuButtons) do
-                drawButton(self, button)
+                drawRetroButton(self, button)
             end
 
-            lg.setColor(0.9, 0.9, 0.9, 0.8)
+            -- Subtitle
+            lg.setColor(0.4, 0.8, 0.4, 0.8)
             self.fonts:setFont("mediumFont")
             lg.printf(self.title.subtitle, 0, screenHeight * 0.5 - 350, screenWidth, "center")
 
-            drawHelpButton(self)
+            drawRetroHelpButton(self)
         end
     elseif state == "options" then
         updateOptionsButtonPositions(self)
@@ -426,20 +542,19 @@ function Menu:draw(screenWidth, screenHeight, state)
         local startY = (self.screenHeight - LAYOUT.TOTAL_SECTIONS_HEIGHT) * 0.5
 
         -- Section headers
-        lg.setColor(0.8, 0.9, 1)
+        lg.setColor(0.4, 0.9, 0.9, 1)
         self.fonts:setFont("sectionFont")
-        lg.printf("Difficulty", 0, startY + 10, self.screenWidth, "center")
-        lg.printf("Character Class", 0, startY + 90, self.screenWidth, "center")
+        lg.printf("DIFFICULTY", 0, startY + 10, self.screenWidth, "center")
+        lg.printf("CHARACTER CLASS", 0, startY + 90, self.screenWidth, "center")
 
         drawOptionSection(self, "difficulty")
         drawOptionSection(self, "character")
         drawOptionSection(self, "navigation")
     end
 
-    -- Copyright
-    lg.setColor(1, 1, 1, 0.6)
+    lg.setColor(0.9, 0.7, 0.2, 0.6)
     self.fonts:setFont("smallFont")
-    lg.printf("© 2025 Jericho Crosby - JeriCraft: Dungeon Crawler", 10, screenHeight - 30, screenWidth - 20, "right")
+    lg.printf("© 2025 JERICHO CROSBY - JERICRAFT: DUNGEON CRAWLER", 10, screenHeight - 30, screenWidth - 20, "right")
 end
 
 function Menu:handleClick(x, y, state)

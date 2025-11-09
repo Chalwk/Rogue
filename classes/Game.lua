@@ -618,8 +618,8 @@ end
 function Game.new(fontManager)
     local instance = setmetatable({}, Game)
 
-    instance.screenWidth = 800
-    instance.screenHeight = 600
+    instance.screenWidth = 0
+    instance.screenHeight = 0
     instance.gameOver = false
     instance.won = false
     instance.difficulty = "medium"
