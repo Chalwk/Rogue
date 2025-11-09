@@ -10,19 +10,19 @@ local table_insert = table.insert
 local math_random = love.math.random
 local math_min, math_max = math.min, math.max
 
-local DIRECTIONS = { {0, -1}, {1, 0}, {0, 1}, {-1, 0} }
+local DIRECTIONS = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } }
 
 local CONSUMABLE_TYPES = { potion = true, scroll = true, food = true }
 
 local SOUND_MAPPINGS = { potion = "heal", scroll = "unlock", food = "heal" }
 
 local BASIC_ITEMS = {
-    { char = "♦", name = "Gold", color = {1, 0.8, 0.2} },
-    { char = "♠", name = "Food", color = {0.9, 0.7, 0.3} },
-    { char = "⚔", name = "Dagger", color = {0.8, 0.8, 0.8} },
-    { char = "⌺", name = "Leather Armor", color = {0.6, 0.4, 0.2} },
-    { char = "♣", name = "Healing Potion", color = {1, 0.2, 0.2} },
-    { char = "⁂", name = "Scroll", color = {0.8, 0.8, 1} }
+    { char = "♦", name = "Gold", color = { 1, 0.8, 0.2 } },
+    { char = "♠", name = "Food", color = { 0.9, 0.7, 0.3 } },
+    { char = "⚔", name = "Dagger", color = { 0.8, 0.8, 0.8 } },
+    { char = "⌺", name = "Leather Armor", color = { 0.6, 0.4, 0.2 } },
+    { char = "♣", name = "Healing Potion", color = { 1, 0.2, 0.2 } },
+    { char = "⁂", name = "Scroll", color = { 0.8, 0.8, 1 } }
 }
 
 local ENHANCED_ITEMS = {
@@ -47,40 +47,40 @@ local ITEM_DESCRIPTIONS = {
 
 local ITEM_APPEARANCE = {
     -- Basic items
-    ["Gold"] = { char = "♦", color = {1, 0.8, 0.2} },
-    ["Food"] = { char = "♠", color = {0.9, 0.7, 0.3} },
-    ["Dagger"] = { char = "⚔", color = {0.8, 0.8, 0.8} },
-    ["Leather Armor"] = { char = "⌺", color = {0.6, 0.4, 0.2} },
-    ["Healing Potion"] = { char = "♣", color = {1, 0.2, 0.2} },
-    ["Scroll"] = { char = "⁂", color = {0.8, 0.8, 1} },
+    ["Gold"] = { char = "♦", color = { 1, 0.8, 0.2 } },
+    ["Food"] = { char = "♠", color = { 0.9, 0.7, 0.3 } },
+    ["Dagger"] = { char = "⚔", color = { 0.8, 0.8, 0.8 } },
+    ["Leather Armor"] = { char = "⌺", color = { 0.6, 0.4, 0.2 } },
+    ["Healing Potion"] = { char = "♣", color = { 1, 0.2, 0.2 } },
+    ["Scroll"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
 
     -- Keys
-    ["Key"] = { char = "⚷", color = {0.8, 0.8, 0.8} },
-    ["Special Key"] = { char = "⚷", color = {1, 0.8, 0} },
+    ["Key"] = { char = "⚷", color = { 0.8, 0.8, 0.8 } },
+    ["Special Key"] = { char = "⚷", color = { 1, 0.8, 0 } },
 
     -- Weapons
-    ["Iron Sword"] = { char = "⚔", color = {0.9, 0.9, 0.9} },
-    ["Steel Sword"] = { char = "⚔", color = {0.7, 0.7, 1} },
-    ["Magic Wand"] = { char = "⚔", color = {0.8, 0.2, 0.8} },
+    ["Iron Sword"] = { char = "⚔", color = { 0.9, 0.9, 0.9 } },
+    ["Steel Sword"] = { char = "⚔", color = { 0.7, 0.7, 1 } },
+    ["Magic Wand"] = { char = "⚔", color = { 0.8, 0.2, 0.8 } },
 
     -- Armor
-    ["Chain Mail"] = { char = "⍝", color = {0.7, 0.7, 0.7} },
-    ["Plate Armor"] = { char = "⍝", color = {0.9, 0.9, 0.9} },
-    ["Magic Robe"] = { char = "⍝", color = {0.3, 0.3, 0.8} },
+    ["Chain Mail"] = { char = "⍝", color = { 0.7, 0.7, 0.7 } },
+    ["Plate Armor"] = { char = "⍝", color = { 0.9, 0.9, 0.9 } },
+    ["Magic Robe"] = { char = "⍝", color = { 0.3, 0.3, 0.8 } },
 
     -- Potions
-    ["Greater Healing Potion"] = { char = "♣", color = {1, 0.5, 0.5} },
-    ["Potion of Might"] = { char = "♣", color = {0.5, 0.5, 1} },
-    ["Potion of Invulnerability"] = { char = "♣", color = {0.2, 0.8, 0.2} },
-    ["Potion of Berserk"] = { char = "♣", color = {1, 0.3, 0.3} },
+    ["Greater Healing Potion"] = { char = "♣", color = { 1, 0.5, 0.5 } },
+    ["Potion of Might"] = { char = "♣", color = { 0.5, 0.5, 1 } },
+    ["Potion of Invulnerability"] = { char = "♣", color = { 0.2, 0.8, 0.2 } },
+    ["Potion of Berserk"] = { char = "♣", color = { 1, 0.3, 0.3 } },
 
     -- Scrolls
-    ["Scroll of Strength"] = { char = "⁂", color = {1, 0.8, 0.8} },
-    ["Scroll of Protection"] = { char = "⁂", color = {0.8, 0.8, 1} },
-    ["Scroll of Healing"] = { char = "⁂", color = {0.8, 1, 0.8} },
-    ["Scroll of Teleportation"] = { char = "⁂", color = {1, 0.8, 1} },
-    ["Scroll of Identify"] = { char = "⁂", color = {1, 1, 0.8} },
-    ["Scroll of Monster Confusion"] = { char = "⁂", color = {0.8, 0.5, 1} },
+    ["Scroll of Strength"] = { char = "⁂", color = { 1, 0.8, 0.8 } },
+    ["Scroll of Protection"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
+    ["Scroll of Healing"] = { char = "⁂", color = { 0.8, 1, 0.8 } },
+    ["Scroll of Teleportation"] = { char = "⁂", color = { 1, 0.8, 1 } },
+    ["Scroll of Identify"] = { char = "⁂", color = { 1, 1, 0.8 } },
+    ["Scroll of Monster Confusion"] = { char = "⁂", color = { 0.8, 0.5, 1 } },
 }
 
 local ITEM_EFFECTS = {
@@ -252,7 +252,7 @@ local ITEM_EFFECTS = {
                             end
                         end
                         if not blocked and not (player.x == x and player.y == y) then
-                            table_insert(possiblePositions, {x = x, y = y})
+                            table_insert(possiblePositions, { x = x, y = y })
                         end
                     end
                 end
@@ -353,6 +353,8 @@ function ItemManager:getBasicItemDefinitions() return BASIC_ITEMS end
 
 function ItemManager:getItemDefinition(itemName) return ITEM_APPEARANCE[itemName] end
 
+function ItemManager:getItemEffect(itemName) return ITEM_EFFECTS[itemName] end
+
 function ItemManager:useItem(itemName, player, game)
     local effect = ITEM_EFFECTS[itemName]
     if not effect then return "You can't use the " .. itemName .. " right now." end
@@ -383,9 +385,7 @@ function ItemManager:updateEffects(player, currentTurn)
         end
     end
 
-    for effectName in pairs(expiredEffects) do
-        self.activeEffects[effectName] = nil
-    end
+    for effectName in pairs(expiredEffects) do self.activeEffects[effectName] = nil end
 
     return expiredEffects
 end

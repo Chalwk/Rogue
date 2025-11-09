@@ -833,13 +833,14 @@ function Game:useSelectedItem()
         return
     end
 
-    local result = self.itemManager:useItem(itemName, self.player, self)
+    local im = self.itemManager
+    local result = im:useItem(itemName, self.player, self)
 
     -- Remove the item from inventory if it's equipment (weapon/armor) or consumable
     local shouldRemove = true
 
     -- Check if it's equipment that gets equipped
-    local effect = self.itemManager.ITEM_EFFECTS[itemName]
+    local effect = im:getItemEffect(itemName)
     if effect and (effect.type == "weapon" or effect.type == "armor") then
         shouldRemove = true
     end
