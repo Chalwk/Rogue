@@ -5,22 +5,82 @@
 local ItemManager = {}
 ItemManager.__index = ItemManager
 
-local ipairs = ipairs
-local pairs = pairs
+local ipairs, pairs = ipairs, pairs
 local table_insert = table.insert
-
 local math_random = love.math.random
-local math_min = math.min
-local math_max = math.max
+local math_min, math_max = math.min, math.max
 
--- Basic item definitions for regular rooms
+local DIRECTIONS = { {0, -1}, {1, 0}, {0, 1}, {-1, 0} }
+
+local CONSUMABLE_TYPES = { potion = true, scroll = true, food = true }
+
+local SOUND_MAPPINGS = { potion = "heal", scroll = "unlock", food = "heal" }
+
 local BASIC_ITEMS = {
-    { char = "♦", name = "Gold", color = { 1, 0.8, 0.2 } },
-    { char = "♠", name = "Food", color = { 0.9, 0.7, 0.3 } },
-    { char = "⚔", name = "Dagger", color = { 0.8, 0.8, 0.8 } },
-    { char = "⌺", name = "Leather Armor", color = { 0.6, 0.4, 0.2 } },
-    { char = "♣", name = "Healing Potion", color = { 1, 0.2, 0.2 } },
-    { char = "⁂", name = "Scroll", color = { 0.8, 0.8, 1 } }
+    { char = "♦", name = "Gold", color = {1, 0.8, 0.2} },
+    { char = "♠", name = "Food", color = {0.9, 0.7, 0.3} },
+    { char = "⚔", name = "Dagger", color = {0.8, 0.8, 0.8} },
+    { char = "⌺", name = "Leather Armor", color = {0.6, 0.4, 0.2} },
+    { char = "♣", name = "Healing Potion", color = {1, 0.2, 0.2} },
+    { char = "⁂", name = "Scroll", color = {0.8, 0.8, 1} }
+}
+
+local ENHANCED_ITEMS = {
+    "Iron Sword", "Steel Sword", "Magic Wand",
+    "Chain Mail", "Plate Armor", "Magic Robe",
+    "Greater Healing Potion", "Potion of Might",
+    "Potion of Invulnerability", "Potion of Berserk",
+    "Scroll of Strength", "Scroll of Protection",
+    "Scroll of Healing", "Scroll of Teleportation",
+    "Scroll of Identify", "Scroll of Monster Confusion"
+}
+local ENHANCED_ITEMS_COUNT = #ENHANCED_ITEMS
+
+local ITEM_DESCRIPTIONS = {
+    weapon = "A weapon that increases your attack power when equipped.",
+    armor = "Armor that increases your defense when equipped.",
+    potion = "A consumable potion with magical effects.",
+    scroll = "A magical scroll that can be read for powerful effects.",
+    food = "Food that restores health when consumed.",
+    key = "A special key that can unlock mysterious doors."
+}
+
+local ITEM_APPEARANCE = {
+    -- Basic items
+    ["Gold"] = { char = "♦", color = {1, 0.8, 0.2} },
+    ["Food"] = { char = "♠", color = {0.9, 0.7, 0.3} },
+    ["Dagger"] = { char = "⚔", color = {0.8, 0.8, 0.8} },
+    ["Leather Armor"] = { char = "⌺", color = {0.6, 0.4, 0.2} },
+    ["Healing Potion"] = { char = "♣", color = {1, 0.2, 0.2} },
+    ["Scroll"] = { char = "⁂", color = {0.8, 0.8, 1} },
+
+    -- Keys
+    ["Key"] = { char = "⚷", color = {0.8, 0.8, 0.8} },
+    ["Special Key"] = { char = "⚷", color = {1, 0.8, 0} },
+
+    -- Weapons
+    ["Iron Sword"] = { char = "⚔", color = {0.9, 0.9, 0.9} },
+    ["Steel Sword"] = { char = "⚔", color = {0.7, 0.7, 1} },
+    ["Magic Wand"] = { char = "⚔", color = {0.8, 0.2, 0.8} },
+
+    -- Armor
+    ["Chain Mail"] = { char = "⍝", color = {0.7, 0.7, 0.7} },
+    ["Plate Armor"] = { char = "⍝", color = {0.9, 0.9, 0.9} },
+    ["Magic Robe"] = { char = "⍝", color = {0.3, 0.3, 0.8} },
+
+    -- Potions
+    ["Greater Healing Potion"] = { char = "♣", color = {1, 0.5, 0.5} },
+    ["Potion of Might"] = { char = "♣", color = {0.5, 0.5, 1} },
+    ["Potion of Invulnerability"] = { char = "♣", color = {0.2, 0.8, 0.2} },
+    ["Potion of Berserk"] = { char = "♣", color = {1, 0.3, 0.3} },
+
+    -- Scrolls
+    ["Scroll of Strength"] = { char = "⁂", color = {1, 0.8, 0.8} },
+    ["Scroll of Protection"] = { char = "⁂", color = {0.8, 0.8, 1} },
+    ["Scroll of Healing"] = { char = "⁂", color = {0.8, 1, 0.8} },
+    ["Scroll of Teleportation"] = { char = "⁂", color = {1, 0.8, 1} },
+    ["Scroll of Identify"] = { char = "⁂", color = {1, 1, 0.8} },
+    ["Scroll of Monster Confusion"] = { char = "⁂", color = {0.8, 0.5, 1} },
 }
 
 local ITEM_EFFECTS = {
@@ -140,7 +200,7 @@ local ITEM_EFFECTS = {
         use = function(player, game)
             local attackBonus = math_random(5, 10)
             player.attack = player.attack + attackBonus
-            player.defense = math_max(0, player.defense - 2) -- Small defense penalty
+            player.defense = math_max(0, player.defense - 2)
             return "You drink the potion of berserk! Attack +" .. attackBonus .. ", Defense -2 (temporary)"
         end,
         duration = 6
@@ -184,7 +244,6 @@ local ITEM_EFFECTS = {
                 for x = 1, #dungeon[y] do
                     local tile = dungeon[y][x]
                     if tile.type == "floor" then
-                        -- Check if position is blocked by monsters or player
                         local blocked = false
                         for _, monster in ipairs(monsters) do
                             if monster.x == x and monster.y == y then
@@ -193,7 +252,7 @@ local ITEM_EFFECTS = {
                             end
                         end
                         if not blocked and not (player.x == x and player.y == y) then
-                            table_insert(possiblePositions, { x = x, y = y })
+                            table_insert(possiblePositions, {x = x, y = y})
                         end
                     end
                 end
@@ -213,18 +272,10 @@ local ITEM_EFFECTS = {
     ["Scroll of Identify"] = {
         type = "scroll",
         use = function(player, game)
-            -- Reveal entire current level for a few turns
-            if game.inSpecialRoom then
-                for y = 1, #game.specialRoomVisibleTiles do
-                    for x = 1, #game.specialRoomVisibleTiles[y] do
-                        game.specialRoomVisibleTiles[y][x] = true
-                    end
-                end
-            else
-                for y = 1, #game.visibleTiles do
-                    for x = 1, #game.visibleTiles[y] do
-                        game.visibleTiles[y][x] = true
-                    end
+            local visibleTiles = game.inSpecialRoom and game.specialRoomVisibleTiles or game.visibleTiles
+            for y = 1, #visibleTiles do
+                for x = 1, #visibleTiles[y] do
+                    visibleTiles[y][x] = true
                 end
             end
             return "The scroll reveals the entire area around you!"
@@ -237,10 +288,8 @@ local ITEM_EFFECTS = {
             local confusedCount = 0
 
             for _, monster in ipairs(monsters) do
-                if math_random() < 0.6 then -- 60% chance to confuse each monster
-                    -- Move monster randomly
-                    local directions = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } }
-                    local dir = directions[math_random(#directions)]
+                if math_random() < 0.6 then
+                    local dir = DIRECTIONS[math_random(#DIRECTIONS)]
                     local newX = monster.x + dir[1]
                     local newY = monster.y + dir[2]
 
@@ -257,15 +306,13 @@ local ITEM_EFFECTS = {
         end
     },
 
-    -- Regular Key
+    -- Keys
     ["Key"] = {
         type = "key",
         use = function(player, game)
             return "This key is used to unlock the exit door. Move next to the locked exit door and press 'E' to use it."
         end
     },
-
-    -- Special Key
     ["Special Key"] = {
         type = "key",
         use = function(player, game)
@@ -273,7 +320,7 @@ local ITEM_EFFECTS = {
         end
     },
 
-    -- Food (now can be saved in inventory)
+    -- Food
     ["Food"] = {
         type = "food",
         use = function(player, game)
@@ -282,63 +329,6 @@ local ITEM_EFFECTS = {
             return "You eat some food and heal " .. heal .. " HP!"
         end
     }
-}
-
-local ITEM_APPEARANCE = {
-    -- Basic items
-    ["Gold"] = { char = "♦", color = { 1, 0.8, 0.2 } },
-    ["Food"] = { char = "♠", color = { 0.9, 0.7, 0.3 } },
-    ["Dagger"] = { char = "⚔", color = { 0.8, 0.8, 0.8 } },
-    ["Leather Armor"] = { char = "⌺", color = { 0.6, 0.4, 0.2 } },
-    ["Healing Potion"] = { char = "♣", color = { 1, 0.2, 0.2 } },
-    ["Scroll"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
-
-    -- Keys
-    ["Key"] = { char = "⚷", color = { 0.8, 0.8, 0.8 } },
-    ["Special Key"] = { char = "⚷", color = { 1, 0.8, 0 } },
-
-    -- Enhanced weapons
-    ["Iron Sword"] = { char = "⚔", color = { 0.9, 0.9, 0.9 } },
-    ["Steel Sword"] = { char = "⚔", color = { 0.7, 0.7, 1 } },
-    ["Magic Wand"] = { char = "⚔", color = { 0.8, 0.2, 0.8 } },
-
-    -- Enhanced armor
-    ["Chain Mail"] = { char = "⍝", color = { 0.7, 0.7, 0.7 } },
-    ["Plate Armor"] = { char = "⍝", color = { 0.9, 0.9, 0.9 } },
-    ["Magic Robe"] = { char = "⍝", color = { 0.3, 0.3, 0.8 } },
-
-    -- Enhanced potions
-    ["Greater Healing Potion"] = { char = "♣", color = { 1, 0.5, 0.5 } },
-    ["Potion of Might"] = { char = "♣", color = { 0.5, 0.5, 1 } },
-    ["Potion of Invulnerability"] = { char = "♣", color = { 0.2, 0.8, 0.2 } },
-    ["Potion of Berserk"] = { char = "♣", color = { 1, 0.3, 0.3 } },
-
-    -- Enhanced scrolls
-    ["Scroll of Strength"] = { char = "⁂", color = { 1, 0.8, 0.8 } },
-    ["Scroll of Protection"] = { char = "⁂", color = { 0.8, 0.8, 1 } },
-    ["Scroll of Healing"] = { char = "⁂", color = { 0.8, 1, 0.8 } },
-    ["Scroll of Teleportation"] = { char = "⁂", color = { 1, 0.8, 1 } },
-    ["Scroll of Identify"] = { char = "⁂", color = { 1, 1, 0.8 } },
-    ["Scroll of Monster Confusion"] = { char = "⁂", color = { 0.8, 0.5, 1 } },
-}
-
-local ITEM_DESCRIPTIONS = {
-    weapon = "A weapon that increases your attack power when equipped.",
-    armor = "Armor that increases your defense when equipped.",
-    potion = "A consumable potion with magical effects.",
-    scroll = "A magical scroll that can be read for powerful effects.",
-    food = "Food that restores health when consumed.",
-    key = "A special key that can unlock mysterious doors."
-}
-
-local ENHANCED_ITEMS = {
-    "Iron Sword", "Steel Sword", "Magic Wand",
-    "Chain Mail", "Plate Armor", "Magic Robe",
-    "Greater Healing Potion", "Potion of Might",
-    "Potion of Invulnerability", "Potion of Berserk",
-    "Scroll of Strength", "Scroll of Protection",
-    "Scroll of Healing", "Scroll of Teleportation",
-    "Scroll of Identify", "Scroll of Monster Confusion"
 }
 
 local function addTemporaryEffect(self, effectName, effect, player, currentTurn)
@@ -365,23 +355,17 @@ function ItemManager:getItemDefinition(itemName) return ITEM_APPEARANCE[itemName
 
 function ItemManager:useItem(itemName, player, game)
     local effect = ITEM_EFFECTS[itemName]
-
     if not effect then return "You can't use the " .. itemName .. " right now." end
 
     local result = effect.use(player, game)
 
-    if effect.duration then addTemporaryEffect(self, itemName, effect, player, game.turn) end
+    if effect.duration then
+        addTemporaryEffect(self, itemName, effect, player, game.turn)
+    end
 
     if game.sounds then
-        if effect.type == "potion" then
-            game.sounds:play("heal")
-        elseif effect.type == "scroll" then
-            game.sounds:play("unlock")
-        elseif effect.type == "food" then
-            game.sounds:play("heal")
-        else
-            game.sounds:play("pickup")
-        end
+        local soundName = SOUND_MAPPINGS[effect.type] or "pickup"
+        game.sounds:play(soundName)
     end
 
     return result
@@ -392,16 +376,14 @@ function ItemManager:updateEffects(player, currentTurn)
 
     for effectName, effectData in pairs(self.activeEffects) do
         if currentTurn >= effectData.expiresAt then
-            -- Effect expired, revert changes
             local original = effectData.originalStats
             player.attack = original.attack
             player.defense = original.defense
-            table_insert(expiredEffects, effectName)
+            expiredEffects[effectName] = true
         end
     end
 
-    -- Remove expired effects
-    for _, effectName in ipairs(expiredEffects) do
+    for effectName in pairs(expiredEffects) do
         self.activeEffects[effectName] = nil
     end
 
@@ -410,11 +392,11 @@ end
 
 function ItemManager:isConsumable(itemName)
     local effect = ITEM_EFFECTS[itemName]
-    return effect and (effect.type == "potion" or effect.type == "scroll" or effect.type == "food")
+    return effect and CONSUMABLE_TYPES[effect.type]
 end
 
 function ItemManager:getRandomEnhancedItem()
-    return ENHANCED_ITEMS[math_random(#ENHANCED_ITEMS)]
+    return ENHANCED_ITEMS[math_random(ENHANCED_ITEMS_COUNT)]
 end
 
 function ItemManager:getItemDescription(itemName)

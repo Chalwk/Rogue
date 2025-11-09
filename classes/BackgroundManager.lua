@@ -129,7 +129,7 @@ function BackgroundManager:drawMenuBackground(screenWidth, screenHeight, time)
         lg.pop()
     end
 
-    -- Draw torch motes with precomputed colors
+    -- Draw torch motes
     for _, mote in ipairs(self.torchMotes) do
         local flicker = (math_sin(time * mote.flickerSpeed + mote.flickerPhase) + 1) * 0.5
         local alpha = mote.alpha * (0.5 + flicker * 0.5)
